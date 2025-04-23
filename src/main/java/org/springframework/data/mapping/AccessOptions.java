@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public class AccessOptions {
 			Assert.isTrue(type.isAssignableFrom(property.getType()), () -> String
 					.format("Cannot register a property handler for %s on a property of type %s", type, property.getType()));
 
-			Function<Object, T> caster = (Function<Object, T>) it -> type.cast(it);
+			Function<Object, T> caster = type::cast;
 
 			return registerHandler(property, caster.andThen(handler));
 		}

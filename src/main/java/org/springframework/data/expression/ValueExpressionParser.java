@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,16 @@ import org.springframework.expression.ParseException;
  * @since 3.3
  */
 public interface ValueExpressionParser {
+
+	/**
+	 * Creates a default parser to parse expression strings.
+	 *
+	 * @return the parser instance.
+	 * @since 3.4
+	 */
+	static ValueExpressionParser create() {
+		return DefaultValueExpressionParser.DEFAULT;
+	}
 
 	/**
 	 * Creates a new parser to parse expression strings.

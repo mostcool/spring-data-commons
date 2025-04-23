@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.springframework.data.projection;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +45,7 @@ import org.springframework.util.ObjectUtils;
  * @author Mark Paluch
  * @author Christoph Strobl
  * @author Johannes Englmeier
+ * @author Yanming Zhou
  * @since 1.10
  */
 class ProjectingMethodInterceptor implements MethodInterceptor {
@@ -64,11 +66,13 @@ class ProjectingMethodInterceptor implements MethodInterceptor {
 	@Override
 	public Object invoke(@SuppressWarnings("null") @NonNull MethodInvocation invocation) throws Throwable {
 
-		TypeInformation<?> type = TypeInformation.fromReturnTypeOf(invocation.getMethod());
+		Method method = invocation.getMethod();
+		TypeInformation<?> type = TypeInformation.fromReturnTypeOf(method);
 		TypeInformation<?> resultType = type;
 		TypeInformation<?> typeToReturn = type;
 
 		Object result = delegate.invoke(invocation);
+
 		boolean applyWrapper = false;
 
 		if (NullableWrapperConverters.supports(type.getType())

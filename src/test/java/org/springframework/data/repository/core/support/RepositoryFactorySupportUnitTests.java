@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -57,6 +58,8 @@ import org.springframework.data.repository.core.EntityInformation;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
+import org.springframework.data.repository.core.RepositoryMethodContext;
+import org.springframework.data.repository.core.RepositoryMethodContextHolder;
 import org.springframework.data.repository.core.support.DummyRepositoryFactory.MyRepositoryQuery;
 import org.springframework.data.repository.core.support.RepositoryComposition.RepositoryFragments;
 import org.springframework.data.repository.core.support.RepositoryMethodInvocationListener.RepositoryMethodInvocation;
@@ -251,11 +254,10 @@ class RepositoryFactorySupportUnitTests {
 	@Test // GH-3090
 	void capturesRepositoryMetadata() {
 
-		record Metadata(RepositoryMethodContext context, MethodInvocation methodInvocation) {
-		}
+		record Metadata(RepositoryMethodContext context, MethodInvocation methodInvocation) {}
 
 		when(factory.queryOne.execute(any(Object[].class)))
-				.then(invocation -> new Metadata(RepositoryMethodContext.currentMethod(),
+				.then(invocation -> new Metadata(RepositoryMethodContextHolder.getContext(),
 						ExposeInvocationInterceptor.currentInvocation()));
 
 		factory.setExposeMetadata(true);
@@ -267,7 +269,7 @@ class RepositoryFactorySupportUnitTests {
 
 		Metadata metadata = (Metadata) metadataByLastname;
 		assertThat(metadata.context().getMethod().getName()).isEqualTo("findMetadataByLastname");
-		assertThat(metadata.context().getRepository().getDomainType()).isEqualTo(Object.class);
+		assertThat(metadata.context().getMetadata().getDomainType()).isEqualTo(Object.class);
 		assertThat(metadata.methodInvocation().getMethod().getName()).isEqualTo("findMetadataByLastname");
 	}
 
@@ -278,7 +280,7 @@ class RepositoryFactorySupportUnitTests {
 		}
 
 		when(factory.queryOne.execute(any(Object[].class)))
-				.then(invocation -> new Metadata(RepositoryMethodContext.currentMethod(),
+				.then(invocation -> new Metadata(RepositoryMethodContextHolder.getContext(),
 						ExposeInvocationInterceptor.currentInvocation()));
 
 		var repository = factory.getRepository(ObjectRepository.class, new RepositoryMetadataAccess() {});
@@ -288,8 +290,28 @@ class RepositoryFactorySupportUnitTests {
 
 		Metadata metadata = (Metadata) metadataByLastname;
 		assertThat(metadata.context().getMethod().getName()).isEqualTo("findMetadataByLastname");
-		assertThat(metadata.context().getRepository().getDomainType()).isEqualTo(Object.class);
+		assertThat(metadata.context().getMetadata().getDomainType()).isEqualTo(Object.class);
 		assertThat(metadata.methodInvocation().getMethod().getName()).isEqualTo("findMetadataByLastname");
+	}
+
+	@Test
+	void cachesRepositoryInformation() {
+
+		var repository1 = factory.getRepository(ObjectAndQuerydslRepository.class, backingRepo);
+		var repository2 = factory.getRepository(ObjectAndQuerydslRepository.class, backingRepo);
+		repository1.findByFoo();
+		repository2.deleteAll();
+
+		for (int i = 0; i < 10; i++) {
+			RepositoryFragments fragments = RepositoryFragments.just(backingRepo);
+			RepositoryMetadata metadata = factory.getRepositoryMetadata(ObjectAndQuerydslRepository.class);
+			factory.getRepositoryInformation(metadata, fragments);
+		}
+
+		Map<Object, RepositoryInformation> cache = (Map) ReflectionTestUtils.getField(factory,
+				"repositoryInformationCache");
+
+		assertThat(cache).hasSize(1);
 	}
 
 	@Test // DATACMNS-509, DATACMNS-1764
@@ -543,6 +565,10 @@ class RepositoryFactorySupportUnitTests {
 
 	interface SimpleRepository extends Repository<Object, Serializable> {}
 
+	interface ObjectAndQuerydslRepository extends ObjectRepository, QuerydslPredicateExecutor<Object> {
+
+	}
+
 	interface ObjectRepository extends Repository<Object, Object>, ObjectRepositoryCustom {
 
 		@Nullable
@@ -605,6 +631,7 @@ class RepositoryFactorySupportUnitTests {
 
 	}
 
+	@SuppressWarnings("removal")
 	interface ConvertingRepository extends Repository<Object, Long> {
 
 		Set<String> convertListToStringSet();

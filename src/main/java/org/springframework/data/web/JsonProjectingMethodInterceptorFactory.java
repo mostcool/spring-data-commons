@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2016-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class JsonProjectingMethodInterceptorFactory implements MethodInterceptor
 	@Override
 	public MethodInterceptor createMethodInterceptor(Object source, Class<?> targetType) {
 
-		DocumentContext context = InputStream.class.isInstance(source) ? this.context.parse((InputStream) source)
+		DocumentContext context = source instanceof InputStream ? this.context.parse((InputStream) source)
 				: this.context.parse(source);
 
 		return new InputMessageProjecting(context);
@@ -106,12 +106,11 @@ public class JsonProjectingMethodInterceptorFactory implements MethodInterceptor
 	@Override
 	public boolean supports(Object source, Class<?> targetType) {
 
-		if (InputStream.class.isInstance(source) || JSONObject.class.isInstance(source)
-				|| JSONArray.class.isInstance(source)) {
+		if (source instanceof InputStream || source instanceof JSONObject || source instanceof JSONArray) {
 			return true;
 		}
 
-		return Map.class.isInstance(source) && hasJsonPathAnnotation(targetType);
+		return source instanceof Map && hasJsonPathAnnotation(targetType);
 	}
 
 	/**

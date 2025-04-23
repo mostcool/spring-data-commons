@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -279,19 +279,23 @@ class RepositoriesUnitTests {
 			this.mappingContext = new SampleMappingContext();
 		}
 
+		@Override
 		@SuppressWarnings({ "unchecked", "rawtypes" })
 		public EntityInformation<T, S> getEntityInformation() {
 			return new DummyEntityInformation(repositoryMetadata.getDomainType());
 		}
 
+		@Override
 		public RepositoryInformation getRepositoryInformation() {
 			return new DummyRepositoryInformation(repositoryMetadata);
 		}
 
+		@Override
 		public PersistentEntity<?, ?> getPersistentEntity() {
 			return mappingContext.getRequiredPersistentEntity(repositoryMetadata.getDomainType());
 		}
 
+		@Override
 		public List<QueryMethod> getQueryMethods() {
 			return Collections.emptyList();
 		}

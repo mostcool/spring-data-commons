@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.data.spel.ExpressionDependencies;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ParseException;
 import org.springframework.expression.ParserContext;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.util.Assert;
 import org.springframework.util.SystemPropertyUtils;
 
@@ -38,6 +39,8 @@ class DefaultValueExpressionParser implements ValueExpressionParser {
 	public static final char SUFFIX = '}';
 	public static final int PLACEHOLDER_PREFIX_LENGTH = PLACEHOLDER_PREFIX.length();
 	public static final char[] QUOTE_CHARS = { '\'', '"' };
+
+	public static final ValueExpressionParser DEFAULT = new DefaultValueExpressionParser(SpelExpressionParser::new);
 
 	private final ValueParserConfiguration configuration;
 

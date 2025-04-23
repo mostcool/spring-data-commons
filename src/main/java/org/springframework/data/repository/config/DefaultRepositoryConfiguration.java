@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,10 +62,12 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 				() -> new IllegalStateException("Can't create bean identifier without a repository base class defined"))));
 	}
 
+	@Override
 	public Object getQueryLookupStrategyKey() {
 		return configurationSource.getQueryLookupStrategyKey().orElse(DEFAULT_QUERY_LOOKUP_STRATEGY);
 	}
 
+	@Override
 	public Streamable<String> getBasePackages() {
 		return configurationSource.getBasePackages();
 	}
@@ -75,6 +77,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 		return Streamable.of(ClassUtils.getPackageName(getRepositoryInterface()));
 	}
 
+	@Override
 	public String getRepositoryInterface() {
 		return ConfigurationUtils.getRequiredBeanClassName(definition);
 	}
@@ -83,6 +86,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 		return configurationSource;
 	}
 
+	@Override
 	public Optional<String> getNamedQueriesLocation() {
 		return configurationSource.getNamedQueryLocation();
 	}
@@ -92,6 +96,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 				configurationSource.getRepositoryImplementationPostfix().orElse(DEFAULT_REPOSITORY_IMPLEMENTATION_POSTFIX));
 	}
 
+	@Override
 	public String getImplementationBeanName() {
 		return beanName.get() + configurationSource.getRepositoryImplementationPostfix().orElse("Impl");
 	}

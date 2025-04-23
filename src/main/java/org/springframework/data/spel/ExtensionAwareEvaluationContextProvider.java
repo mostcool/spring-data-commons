@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,16 +101,17 @@ public class ExtensionAwareEvaluationContextProvider implements EvaluationContex
 	}
 
 	@Override
-	public StandardEvaluationContext getEvaluationContext(Object rootObject) {
+	public StandardEvaluationContext getEvaluationContext(@Nullable Object rootObject) {
 		return doGetEvaluationContext(rootObject, getExtensions(Predicates.isTrue()));
 	}
 
 	@Override
-	public StandardEvaluationContext getEvaluationContext(Object rootObject, ExpressionDependencies dependencies) {
+	public StandardEvaluationContext getEvaluationContext(@Nullable Object rootObject,
+			ExpressionDependencies dependencies) {
 		return doGetEvaluationContext(rootObject, getExtensions(it -> dependencies.stream().anyMatch(it::provides)));
 	}
 
-	StandardEvaluationContext doGetEvaluationContext(Object rootObject,
+	StandardEvaluationContext doGetEvaluationContext(@Nullable Object rootObject,
 			Collection<? extends EvaluationContextExtension> extensions) {
 		StandardEvaluationContext context = new StandardEvaluationContext();
 
@@ -180,7 +181,6 @@ public class ExtensionAwareEvaluationContextProvider implements EvaluationContex
 	 * Creates {@link EvaluationContextExtensionAdapter}s for the given {@link EvaluationContextExtension}s.
 	 *
 	 * @param extensions
-	 * @param filter to remove unwanted extensions.
 	 * @return
 	 */
 	private List<EvaluationContextExtensionAdapter> toAdapters(

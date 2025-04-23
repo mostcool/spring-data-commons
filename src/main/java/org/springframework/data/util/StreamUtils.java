@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,14 +135,14 @@ public interface StreamUtils {
 		int characteristics = lefts.characteristics() & rights.characteristics();
 		boolean parallel = left.isParallel() || right.isParallel();
 
-		return StreamSupport.stream(new AbstractSpliterator<T>(size, characteristics) {
+		return StreamSupport.stream(new AbstractSpliterator<>(size, characteristics) {
 
 			@Override
 			@SuppressWarnings("null")
 			public boolean tryAdvance(Consumer<? super T> action) {
 
-				Sink<L> leftSink = new Sink<L>();
-				Sink<R> rightSink = new Sink<R>();
+				Sink<L> leftSink = new Sink<>();
+				Sink<R> rightSink = new Sink<>();
 
 				boolean leftAdvance = lefts.tryAdvance(leftSink);
 

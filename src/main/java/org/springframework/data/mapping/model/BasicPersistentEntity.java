@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -431,7 +431,7 @@ public class BasicPersistentEntity<T, P extends PersistentProperty<P>> implement
 
 		Iterator<P> iterator = properties.iterator();
 
-		return new Iterator<P>() {
+		return new Iterator<>() {
 
 			@Override
 			public boolean hasNext() {

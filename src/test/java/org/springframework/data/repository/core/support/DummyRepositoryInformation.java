@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,14 +37,17 @@ public final class DummyRepositoryInformation implements RepositoryInformation {
 		this.metadata = metadata;
 	}
 
+	@Override
 	public TypeInformation<?> getIdTypeInformation() {
 		return metadata.getIdTypeInformation();
 	}
 
+	@Override
 	public TypeInformation<?> getDomainTypeInformation() {
 		return metadata.getDomainTypeInformation();
 	}
 
+	@Override
 	public Class<?> getRepositoryInterface() {
 		return metadata.getRepositoryInterface();
 	}
@@ -54,38 +57,47 @@ public final class DummyRepositoryInformation implements RepositoryInformation {
 		return metadata.getReturnType(method);
 	}
 
+	@Override
 	public Class<?> getReturnedDomainClass(Method method) {
 		return getDomainType();
 	}
 
+	@Override
 	public Class<?> getRepositoryBaseClass() {
 		return getRepositoryInterface();
 	}
 
+	@Override
 	public boolean hasCustomMethod() {
 		return false;
 	}
 
+	@Override
 	public boolean isCustomMethod(Method method) {
 		return false;
 	}
 
+	@Override
 	public boolean isQueryMethod(Method method) {
 		return false;
 	}
 
+	@Override
 	public Streamable<Method> getQueryMethods() {
 		return Streamable.empty();
 	}
 
+	@Override
 	public Method getTargetClassMethod(Method method) {
 		return method;
 	}
 
+	@Override
 	public boolean isBaseClassMethod(Method method) {
 		return true;
 	}
 
+	@Override
 	public CrudMethods getCrudMethods() {
 		return new DefaultCrudMethods(this);
 	}

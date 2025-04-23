@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 the original author or authors.
+ * Copyright 2018-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public enum BootstrapMode {
 	DEFERRED,
 
 	/**
-	 * Repository bean definitions are considered lazy, lazily inject and only initialized on first use, i.e. the
+	 * Repository bean definitions are considered lazy, lazily injected and initialized only on first use, i.e., the
 	 * application might have fully started without the repositories initialized.
 	 */
 	LAZY;

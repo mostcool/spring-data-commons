@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,5 +61,16 @@ public interface ValueExpression {
 	 */
 	@Nullable
 	Object evaluate(ValueEvaluationContext context) throws EvaluationException;
+
+	/**
+	 * Return the most general type that the expression would use as return type for the given context.
+	 *
+	 * @param context the context in which to evaluate the expression.
+	 * @return the most general type of value.
+	 * @throws EvaluationException if there is a problem determining the type
+	 * @since 3.4
+	 */
+	@Nullable
+	Class<?> getValueType(ValueEvaluationContext context) throws EvaluationException;
 
 }

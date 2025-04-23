@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2024 the original author or authors.
+ * Copyright 2008-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,7 +204,7 @@ public class Sort implements Streamable<org.springframework.data.domain.Sort.Ord
 
 		Assert.notNull(sort, "Sort must not be null");
 
-		List<Order> these = new ArrayList<Order>(this.toList());
+		List<Order> these = new ArrayList<>(this.toList());
 
 		for (Order order : sort) {
 			these.add(order);

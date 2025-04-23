@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,9 +47,14 @@ record ExpressionExpression(Expression expression, ExpressionDependencies depend
 	public Object evaluate(ValueEvaluationContext context) {
 
 		EvaluationContext evaluationContext = context.getEvaluationContext();
-		if (evaluationContext != null) {
-			return expression.getValue(evaluationContext);
-		}
-		return expression.getValue();
+		return evaluationContext != null ? expression.getValue(evaluationContext) : expression.getValue();
 	}
+
+	@Override
+	public Class<?> getValueType(ValueEvaluationContext context) {
+
+		EvaluationContext evaluationContext = context.getEvaluationContext();
+		return evaluationContext != null ? expression.getValueType(evaluationContext) : expression.getValueType();
+	}
+
 }

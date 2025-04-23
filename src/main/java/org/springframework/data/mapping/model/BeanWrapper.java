@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ class BeanWrapper<T> implements PersistentPropertyAccessor<T> {
 		this.bean = bean;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public void setProperty(PersistentProperty<?> property, @Nullable Object value) {
 
@@ -103,6 +104,7 @@ class BeanWrapper<T> implements PersistentPropertyAccessor<T> {
 		}
 	}
 
+	@Override
 	@Nullable
 	public Object getProperty(PersistentProperty<?> property) {
 		return getProperty(property, property.getType());
@@ -115,7 +117,7 @@ class BeanWrapper<T> implements PersistentPropertyAccessor<T> {
 	 * @param property must not be {@literal null}.
 	 * @param type can be {@literal null}.
 	 * @return
-	 * @throws MappingException in case an exception occured when accessing the property.
+	 * @throws MappingException in case an exception occurred when accessing the property.
 	 */
 	@Nullable
 	public <S> Object getProperty(PersistentProperty<?> property, Class<? extends S> type) {
@@ -143,6 +145,7 @@ class BeanWrapper<T> implements PersistentPropertyAccessor<T> {
 		}
 	}
 
+	@Override
 	public T getBean() {
 		return bean;
 	}

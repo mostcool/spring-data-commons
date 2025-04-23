@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.springframework.data.projection;
 
 import static org.assertj.core.api.Assertions.*;
 
+import example.NoNullableMarkedInterface;
+
 import java.lang.reflect.Proxy;
 import java.time.LocalDateTime;
 import java.util.Calendar;
@@ -31,6 +33,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.aop.Advisor;
 import org.springframework.aop.TargetClassAware;
 import org.springframework.aop.framework.Advised;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.Nullable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -135,6 +139,19 @@ class ProxyProjectionFactoryUnitTests {
 		var result = projectionInformation.getInputProperties();
 
 		assertThat(result).hasSize(6);
+		assertThat(projectionInformation.hasInputProperties()).isTrue();
+		assertThat(projectionInformation.isClosed()).isTrue();
+	}
+
+	@Test // DATACMNS-630
+	void identifiersOpenProjectionCorrectly() {
+
+		var projectionInformation = factory.getProjectionInformation(OpenProjection.class);
+		var result = projectionInformation.getInputProperties();
+
+		assertThat(result).isEmpty();
+		assertThat(projectionInformation.hasInputProperties()).isFalse();
+		assertThat(projectionInformation.isClosed()).isFalse();
 	}
 
 	@Test // DATACMNS-655, GH-2831
@@ -328,6 +345,45 @@ class ProxyProjectionFactoryUnitTests {
 		assertThat(excerpt.getBirthdate()).contains(LocalDateTime.of(1967, 1, 9, 0, 0));
 	}
 
+	@Test // GH-3242
+	void projectionFactoryConsidersKotlinNullabilityConstraints() {
+
+		var source = new HashMap<String, Object>(2);
+		source.put("name", null);
+		source.put("age", null);
+
+		Person projection = factory.createProjection(Person.class, source);
+
+		assertThatNoException().isThrownBy(projection::getAge);
+		assertThatExceptionOfType(NullPointerException.class).isThrownBy(projection::getName);
+	}
+
+	@Test // GH-3242
+	void projectionFactoryConsidersNullabilityAnnotations() {
+
+		var source = new HashMap<String, Object>(2);
+		source.put("firstname", null);
+		source.put("lastname", null);
+
+		CustomerProjectionWithNullables projection = factory.createProjection(CustomerProjectionWithNullables.class, source);
+
+		assertThatNoException().isThrownBy(projection::getFirstname);
+		assertThatExceptionOfType(NullPointerException.class).isThrownBy(projection::getLastname);
+	}
+
+	@Test // GH-3242
+	void projectionFactoryIgnoresNullabilityAnnotationsOnUnmanagedPackage() {
+
+		var source = new HashMap<String, Object>(2);
+		source.put("firstname", null);
+		source.put("lastname", null);
+
+		NoNullableMarkedInterface projection = factory.createProjection(NoNullableMarkedInterface.class, source);
+
+		assertThatNoException().isThrownBy(projection::getFirstname);
+		assertThatNoException().isThrownBy(projection::getLastname);
+	}
+
 	interface Contact {}
 
 	interface CustomerWithLocalDateTime {
@@ -335,6 +391,12 @@ class ProxyProjectionFactoryUnitTests {
 		String getFirstname();
 
 		LocalDateTime getBirthdate();
+	}
+
+	interface CustomerProjectionWithNullables {
+
+		@Nullable String getFirstname();
+		String getLastname();
 	}
 
 	static class Address {
@@ -355,6 +417,12 @@ class ProxyProjectionFactoryUnitTests {
 		byte[] getPicture();
 
 		Map<String, Object> getData();
+	}
+
+	interface OpenProjection {
+
+		@Value("#{@greetingsFrom.groot(target.firstname)}")
+		String hello();
 	}
 
 	interface CustomerExcerptWithDefaultMethod extends CustomerExcerpt {

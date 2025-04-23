@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.springframework.data.projection;
 
 import java.beans.PropertyDescriptor;
 import java.util.List;
+
+import org.springframework.util.CollectionUtils;
 
 /**
  * Information about a projection type.
@@ -39,6 +41,17 @@ public interface ProjectionInformation {
 	 * @return will never be {@literal null}.
 	 */
 	List<PropertyDescriptor> getInputProperties();
+
+	/**
+	 * Returns whether the projection has input properties. Projections without input types are typically open projections
+	 * that do not follow Java's property accessor naming.
+	 *
+	 * @return
+	 * @since 3.3.5
+	 */
+	default boolean hasInputProperties() {
+		return !CollectionUtils.isEmpty(getInputProperties());
+	}
 
 	/**
 	 * Returns whether supplying values for the properties returned via {@link #getInputProperties()} is sufficient to

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,8 +26,11 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 /**
  * Extracts paging information from web requests and thus allows injecting {@link Pageable} instances into controller
- * methods. Request properties to be parsed can be configured. Default configuration uses request parameters beginning
- * with {@link #DEFAULT_PAGE_PARAMETER}{@link #DEFAULT_QUALIFIER_DELIMITER}.
+ * methods. Request properties to be parsed can be configured defaulting to {@code page} for the page number and
+ * {@code size} for the page size.
+ * <p>
+ * Parameters can be {@link #setPrefix(String) prefixed} to disambiguate from other parameters in the request if
+ * necessary.
  *
  * @author Oliver Gierke
  * @author Nick Williams
@@ -40,7 +43,8 @@ public class PageableHandlerMethodArgumentResolver extends PageableHandlerMethod
 		implements PageableArgumentResolver {
 
 	private static final SortHandlerMethodArgumentResolver DEFAULT_SORT_RESOLVER = new SortHandlerMethodArgumentResolver();
-	private SortArgumentResolver sortResolver;
+
+	private final SortArgumentResolver sortResolver;
 
 	/**
 	 * Constructs an instance of this resolved with a default {@link SortHandlerMethodArgumentResolver}.

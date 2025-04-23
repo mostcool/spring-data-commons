@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
  */
 package org.springframework.data.repository.config;
 
-import static org.springframework.beans.factory.support.BeanDefinitionReaderUtils.*;
+import static org.springframework.beans.factory.support.BeanDefinitionReaderUtils.GENERATED_BEAN_NAME_SEPARATOR;
+import static org.springframework.beans.factory.support.BeanDefinitionReaderUtils.generateBeanName;
 
 import java.lang.annotation.Annotation;
 import java.util.Collection;
@@ -69,6 +70,7 @@ public abstract class RepositoryConfigurationExtensionSupport implements Reposit
 		return getRepositoryConfigurations(configSource, loader, false);
 	}
 
+	@Override
 	public <T extends RepositoryConfigurationSource> Collection<RepositoryConfiguration<T>> getRepositoryConfigurations(
 			T configSource, ResourceLoader loader, boolean strictMatchesOnly) {
 
@@ -101,10 +103,12 @@ public abstract class RepositoryConfigurationExtensionSupport implements Reposit
 		return result;
 	}
 
+	@Override
 	public String getDefaultNamedQueryLocation() {
 		return String.format("classpath*:META-INF/%s-named-queries.properties", getModuleIdentifier());
 	}
 
+	@Override
 	public void registerBeansForRoot(BeanDefinitionRegistry registry,
 			RepositoryConfigurationSource configurationSource) {}
 
@@ -119,10 +123,13 @@ public abstract class RepositoryConfigurationExtensionSupport implements Reposit
 	@Deprecated
 	protected abstract String getModulePrefix();
 
+	@Override
 	public void postProcess(BeanDefinitionBuilder builder, RepositoryConfigurationSource source) {}
 
+	@Override
 	public void postProcess(BeanDefinitionBuilder builder, AnnotationRepositoryConfigurationSource config) {}
 
+	@Override
 	public void postProcess(BeanDefinitionBuilder builder, XmlRepositoryConfigurationSource config) {}
 
 	/**

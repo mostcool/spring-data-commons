@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@ public class ProjectingArgumentResolverRegistrar {
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 
-			if (!RequestMappingHandlerAdapter.class.isInstance(bean)) {
+			if (!(bean instanceof RequestMappingHandlerAdapter)) {
 				return bean;
 			}
 
@@ -115,7 +115,7 @@ public class ProjectingArgumentResolverRegistrar {
 						String.format("No HandlerMethodArgumentResolvers found in RequestMappingHandlerAdapter %s", beanName));
 			}
 
-			List<HandlerMethodArgumentResolver> newResolvers = new ArrayList<HandlerMethodArgumentResolver>(
+			List<HandlerMethodArgumentResolver> newResolvers = new ArrayList<>(
 					currentResolvers.size() + 1);
 			newResolvers.add(resolver);
 			newResolvers.addAll(currentResolvers);

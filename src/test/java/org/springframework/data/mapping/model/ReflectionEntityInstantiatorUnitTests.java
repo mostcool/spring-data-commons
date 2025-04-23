@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,12 @@ class ReflectionEntityInstantiatorUnitTests<P extends PersistentProperty<P>> {
 
 		} catch (MappingInstantiationException o_O) {
 
-			assertThat(o_O.getConstructor()).hasValue(constructor);
+			assertThat(o_O.getEntityCreator()
+				.map(it -> (PreferredConstructor) it)
+				.map(PreferredConstructor::getConstructor))
+				.isPresent()
+				.hasValue(constructor);
+
 			assertThat(o_O.getConstructorArguments()).isEqualTo(parameters);
 			assertThat(o_O.getEntityType()).hasValue(Sample.class);
 

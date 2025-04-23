@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,7 +258,7 @@ public class PropertyPath implements Streamable<PropertyPath> {
 	@Override
 	public Iterator<PropertyPath> iterator() {
 
-		return new Iterator<PropertyPath>() {
+		return new Iterator<>() {
 
 			private @Nullable PropertyPath current = PropertyPath.this;
 
@@ -377,7 +377,7 @@ public class PropertyPath implements Streamable<PropertyPath> {
 			Iterator<String> parts = iteratorSource.iterator();
 
 			PropertyPath result = null;
-			Stack<PropertyPath> current = new Stack<PropertyPath>();
+			Stack<PropertyPath> current = new Stack<>();
 
 			while (parts.hasNext()) {
 				if (result == null) {

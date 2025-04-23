@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,7 @@ public class Jackson2ResourceReader implements ResourceReader {
 		this.typeKey = typeKey == null ? DEFAULT_TYPE_KEY : typeKey;
 	}
 
+	@Override
 	public Object readFrom(Resource resource, @Nullable ClassLoader classLoader) throws Exception {
 
 		Assert.notNull(resource, "Resource must not be null");

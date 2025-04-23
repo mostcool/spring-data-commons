@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2024 the original author or authors.
+ * Copyright 2019-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ class EntityCallbackDiscoverer {
 				this.beanClassLoader = cbf.getBeanClassLoader();
 			}
 
-			this.retrievalMutex = cbf.getSingletonMutex();
+			this.retrievalMutex = new Object();
 		}
 
 		defaultRetriever.discoverEntityCallbacks(beanFactory);
@@ -310,7 +310,7 @@ class EntityCallbackDiscoverer {
 
 			for (var beanName : bf.getBeanNamesForType(EntityCallback.class)) {
 
-				EntityCallback<?> bean = EntityCallback.class.cast(bf.getBean(beanName));
+				EntityCallback<?> bean = (EntityCallback) bf.getBean(beanName);
 
 				ResolvableType type = ResolvableType.forClass(EntityCallback.class, bean.getClass());
 				ResolvableType entityType = type.getGeneric(0);

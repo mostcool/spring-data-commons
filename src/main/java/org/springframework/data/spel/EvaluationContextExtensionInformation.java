@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ class EvaluationContextExtensionInformation {
 
 		Assert.notNull(type, "Extension type must not be null");
 
-		Class<?> rootObjectType = org.springframework.data.util.ReflectionUtils.findRequiredMethod(type, "getRootObject")
+		Class<?> rootObjectType = org.springframework.data.util.ReflectionUtils.getRequiredMethod(type, "getRootObject")
 				.getReturnType();
 
 		this.rootObjectInformation = Optional

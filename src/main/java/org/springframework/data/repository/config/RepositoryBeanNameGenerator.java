@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2024 the original author or authors.
+ * Copyright 2012-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ class RepositoryBeanNameGenerator {
 	 */
 	public String generateBeanName(BeanDefinition definition) {
 
-		AnnotatedBeanDefinition beanDefinition = definition instanceof AnnotatedBeanDefinition //
-				? (AnnotatedBeanDefinition) definition //
+		AnnotatedBeanDefinition beanDefinition = definition instanceof AnnotatedBeanDefinition abd //
+				? abd //
 				: new AnnotatedGenericBeanDefinition(getRepositoryInterfaceFrom(definition));
 
 		return generator.generateBeanName(beanDefinition, registry);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package org.springframework.data.geo;
 
-
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
@@ -67,7 +66,7 @@ public class GeoResults<T> implements Iterable<GeoResult<T>>, Serializable {
 	 * @param results must not be {@literal null}.
 	 * @param averageDistance must not be {@literal null}.
 	 */
-	@PersistenceConstructor
+	@PersistenceCreator
 	public GeoResults(List<? extends GeoResult<T>> results, Distance averageDistance) {
 
 		Assert.notNull(results, "Results must not be null");

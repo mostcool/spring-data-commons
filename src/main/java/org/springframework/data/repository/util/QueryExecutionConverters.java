@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,13 +74,14 @@ import org.springframework.util.concurrent.ListenableFuture;
  * @since 1.8
  * @see NullableWrapperConverters
  */
+@SuppressWarnings("removal")
 public abstract class QueryExecutionConverters {
 
 	private static final boolean VAVR_PRESENT = ClassUtils.isPresent("io.vavr.control.Try",
 			QueryExecutionConverters.class.getClassLoader());
 
 	private static final Set<WrapperType> WRAPPER_TYPES = new HashSet<>(10, 1.0f);
-	private static final Set<WrapperType> UNWRAPPER_TYPES = new HashSet<WrapperType>(10, 1.0f);
+	private static final Set<WrapperType> UNWRAPPER_TYPES = new HashSet<>(10, 1.0f);
 	private static final Set<Function<Object, Object>> UNWRAPPERS = new HashSet<>();
 	private static final Set<Class<?>> ALLOWED_PAGEABLE_TYPES = new HashSet<>();
 	private static final Map<Class<?>, ExecutionAdapter> EXECUTION_ADAPTER = new HashMap<>(3, 1.0f);
@@ -361,7 +362,8 @@ public abstract class QueryExecutionConverters {
 	 *
 	 * @author Oliver Gierke
 	 */
-	@Deprecated(since = "3.0")
+	@Deprecated(since = "3.0", forRemoval = true)
+	@SuppressWarnings("removal")
 	private static class NullableWrapperToFutureConverter extends AbstractWrapperTypeConverter {
 
 		/**
@@ -442,7 +444,7 @@ public abstract class QueryExecutionConverters {
 
 			Streamable<Object> streamable = source == null //
 					? Streamable.empty() //
-					: Streamable.of(Iterable.class.cast(source));
+					: Streamable.of((Iterable) source);
 
 			return Streamable.class.equals(targetType.getType()) //
 					? streamable //

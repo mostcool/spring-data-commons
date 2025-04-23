@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ record PlaceholderExpression(String expression) implements ValueExpression {
 	}
 
 	@Override
-	public Object evaluate(ValueEvaluationContext context) {
+	public String evaluate(ValueEvaluationContext context) {
 
 		Environment environment = context.getEnvironment();
 		if (environment != null) {
@@ -49,6 +49,11 @@ record PlaceholderExpression(String expression) implements ValueExpression {
 			}
 		}
 		return expression;
+	}
+
+	@Override
+	public Class<?> getValueType(ValueEvaluationContext context) {
+		return String.class;
 	}
 
 }

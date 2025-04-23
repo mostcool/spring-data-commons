@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2024 the original author or authors.
+ * Copyright 2023-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public interface Window<T> extends Streamable<T> {
 	 *
 	 * @return {@code true} if this window contains no elements
 	 */
+	@Override
 	boolean isEmpty();
 
 	/**
@@ -149,6 +150,7 @@ public interface Window<T> extends Streamable<T> {
 	 * @param converter must not be {@literal null}.
 	 * @return a new {@link Window} with the content of the current one mapped by the given {@code converter}.
 	 */
+	@Override
 	<U> Window<U> map(Function<? super T, ? extends U> converter);
 
 }

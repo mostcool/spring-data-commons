@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -238,10 +238,12 @@ class DefaultCrudMethodsUnitTests {
 	// DATACMNS-393
 	interface RepositoryWithAllCrudMethodOverloaded extends CrudRepository<Domain, Long> {
 
+		@Override
 		List<Domain> findAll();
 
 		<S extends Domain> S save(S entity);
 
+		@Override
 		void deleteById(Long id);
 
 		Optional<Domain> findById(Long id);
@@ -262,6 +264,7 @@ class DefaultCrudMethodsUnitTests {
 	// DATACMNS-539
 	interface RepositoryWithDeleteMethodForEntityOverloaded extends CrudRepository<Domain, Long> {
 
+		@Override
 		void delete(Domain entity);
 	}
 }

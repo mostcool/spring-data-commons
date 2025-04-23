@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 the original author or authors.
+ * Copyright 2018-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,7 +167,7 @@ class SimplePersistentPropertyPathAccessor<T> implements PersistentPropertyPathA
 					.map(it -> setValue(it, leafProperty, value)) //
 					.collect(Collectors.toCollection(() -> CollectionFactory.createApproximateCollection(source, source.size())));
 
-		} else if (Map.class.isInstance(parent)) {
+		} else if (parent instanceof Map) {
 
 			Map<Object, Object> source = getTypedProperty(parentProperty, Map.class);
 

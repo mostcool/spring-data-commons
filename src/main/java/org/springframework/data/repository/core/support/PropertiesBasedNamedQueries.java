@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public class PropertiesBasedNamedQueries implements NamedQueries {
 		this.properties = properties;
 	}
 
+	@Override
 	public boolean hasQuery(String queryName) {
 
 		Assert.hasText(queryName, "Query name must not be null or empty");
@@ -44,6 +45,7 @@ public class PropertiesBasedNamedQueries implements NamedQueries {
 		return properties.containsKey(queryName);
 	}
 
+	@Override
 	public String getQuery(String queryName) {
 
 		Assert.hasText(queryName, "Query name must not be null or empty");

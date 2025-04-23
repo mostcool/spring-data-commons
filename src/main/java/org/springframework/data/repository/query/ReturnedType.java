@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2024 the original author or authors.
+ * Copyright 2015-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.model.PreferredConstructorDiscoverer;
@@ -33,6 +36,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ObjectUtils;
 
@@ -46,6 +50,8 @@ import org.springframework.util.ObjectUtils;
  */
 public abstract class ReturnedType {
 
+	private static final Log logger = LogFactory.getLog(ReturnedType.class);
+
 	private static final Map<CacheKey, ReturnedType> cache = new ConcurrentReferenceHashMap<>(32);
 
 	private final Class<?> domainType;
@@ -57,12 +63,13 @@ public abstract class ReturnedType {
 	/**
 	 * Creates a new {@link ReturnedType} for the given returned type, domain type and {@link ProjectionFactory}.
 	 *
-	 * @param returnedType must not be {@literal null}.
-	 * @param domainType must not be {@literal null}.
+	 * @param returnedType return type for the query result, must not be {@literal null}.
+	 * @param domainType domain type for the query context, must not be {@literal null}.
 	 * @param factory must not be {@literal null}.
-	 * @return
+	 * @return the ReturnedType for the given returned type, domain type and {@link ProjectionFactory}.
+	 * @since 3.3.5
 	 */
-	static ReturnedType of(Class<?> returnedType, Class<?> domainType, ProjectionFactory factory) {
+	public static ReturnedType of(Class<?> returnedType, Class<?> domainType, ProjectionFactory factory) {
 
 		Assert.notNull(returnedType, "Returned type must not be null");
 		Assert.notNull(domainType, "Domain type must not be null");
@@ -129,8 +136,20 @@ public abstract class ReturnedType {
 	 * Returns the properties required to be used to populate the result.
 	 *
 	 * @return
+	 * @see ProjectionInformation#getInputProperties()
 	 */
 	public abstract List<String> getInputProperties();
+
+	/**
+	 * Returns whether the returned type has input properties.
+	 *
+	 * @return
+	 * @since 3.3.5
+	 * @see ProjectionInformation#hasInputProperties()
+	 */
+	public boolean hasInputProperties() {
+		return !CollectionUtils.isEmpty(getInputProperties());
+	}
 
 	/**
 	 * A {@link ReturnedType} that's backed by an interface.
@@ -142,6 +161,7 @@ public abstract class ReturnedType {
 
 		private final ProjectionInformation information;
 		private final Class<?> domainType;
+		private final List<String> inputProperties;
 
 		/**
 		 * Creates a new {@link ReturnedInterface} from the given {@link ProjectionInformation} and domain type.
@@ -157,6 +177,20 @@ public abstract class ReturnedType {
 
 			this.information = information;
 			this.domainType = domainType;
+			this.inputProperties = detectInputProperties(information);
+		}
+
+		private static List<String> detectInputProperties(ProjectionInformation information) {
+
+			List<String> properties = new ArrayList<>();
+
+			for (PropertyDescriptor descriptor : information.getInputProperties()) {
+				if (!properties.contains(descriptor.getName())) {
+					properties.add(descriptor.getName());
+				}
+			}
+
+			return Collections.unmodifiableList(properties);
 		}
 
 		@Override
@@ -164,6 +198,7 @@ public abstract class ReturnedType {
 			return information.getType();
 		}
 
+		@Override
 		public boolean needsCustomConstruction() {
 			return isProjecting() && information.isClosed();
 		}
@@ -181,16 +216,7 @@ public abstract class ReturnedType {
 
 		@Override
 		public List<String> getInputProperties() {
-
-			List<String> properties = new ArrayList<>();
-
-			for (PropertyDescriptor descriptor : information.getInputProperties()) {
-				if (!properties.contains(descriptor.getName())) {
-					properties.add(descriptor.getName());
-				}
-			}
-
-			return properties;
+			return inputProperties;
 		}
 	}
 
@@ -198,6 +224,7 @@ public abstract class ReturnedType {
 	 * A {@link ReturnedType} that's backed by an actual class.
 	 *
 	 * @author Oliver Gierke
+	 * @author Mikhail Polivakha
 	 * @since 1.12
 	 */
 	private static final class ReturnedClass extends ReturnedType {
@@ -205,6 +232,7 @@ public abstract class ReturnedType {
 		private static final Set<Class<?>> VOID_TYPES = new HashSet<>(Arrays.asList(Void.class, void.class));
 
 		private final Class<?> type;
+		private final boolean isDto;
 		private final List<String> inputProperties;
 
 		/**
@@ -222,6 +250,14 @@ public abstract class ReturnedType {
 			Assert.isTrue(!returnedType.isInterface(), "Returned type must not be an interface");
 
 			this.type = returnedType;
+			this.isDto = !Object.class.equals(type) && //
+					!type.isEnum() && //
+					!isDomainSubtype() && //
+					!isPrimitiveOrWrapper() && //
+					!Number.class.isAssignableFrom(type) && //
+					!VOID_TYPES.contains(type) && //
+					!type.getPackage().getName().startsWith("java.");
+
 			this.inputProperties = detectConstructorParameterNames(returnedType);
 		}
 
@@ -230,6 +266,7 @@ public abstract class ReturnedType {
 			return type;
 		}
 
+		@Override
 		@NonNull
 		public Class<?> getTypeToRead() {
 			return type;
@@ -240,6 +277,7 @@ public abstract class ReturnedType {
 			return isDto();
 		}
 
+		@Override
 		public boolean needsCustomConstruction() {
 			return isDto() && !inputProperties.isEmpty();
 		}
@@ -261,23 +299,28 @@ public abstract class ReturnedType {
 				return Collections.emptyList();
 			}
 
-			List<String> properties = new ArrayList<>(constructor.getConstructor().getParameterCount());
+			int parameterCount = constructor.getConstructor().getParameterCount();
+			List<String> properties = new ArrayList<>(parameterCount);
 
 			for (Parameter<Object, ?> parameter : constructor.getParameters()) {
-				properties.add(parameter.getName());
+				if (parameter.hasName()) {
+					properties.add(parameter.getRequiredName());
+				}
 			}
 
-			return properties;
+			if (properties.isEmpty() && parameterCount > 0) {
+				if (logger.isWarnEnabled()) {
+					logger.warn(("No constructor parameter names discovered. "
+							+ "Compile the affected code with '-parameters' instead or avoid its introspection: %s")
+							.formatted(type.getName()));
+				}
+			}
+
+			return Collections.unmodifiableList(properties);
 		}
 
 		private boolean isDto() {
-			return !Object.class.equals(type) && //
-					!type.isEnum() && //
-					!isDomainSubtype() && //
-					!isPrimitiveOrWrapper() && //
-					!Number.class.isAssignableFrom(type) && //
-					!VOID_TYPES.contains(type) && //
-					!type.getPackage().getName().startsWith("java.");
+			return isDto;
 		}
 
 		private boolean isDomainSubtype() {

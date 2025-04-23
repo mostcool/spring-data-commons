@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2024 the original author or authors.
+ * Copyright 2013-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,8 +173,8 @@ abstract class SpringDataAnnotationUtils {
 	private static Qualifier findAnnotation(Annotation[] annotations) {
 
 		for (Annotation annotation : annotations) {
-			if (annotation instanceof Qualifier) {
-				return (Qualifier) annotation;
+			if (annotation instanceof Qualifier q) {
+				return q;
 			}
 		}
 

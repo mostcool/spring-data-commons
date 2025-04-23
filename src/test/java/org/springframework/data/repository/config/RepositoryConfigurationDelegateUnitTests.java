@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 the original author or authors.
+ * Copyright 2016-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-
 import org.springframework.aop.framework.Advised;
 import org.springframework.aot.hint.RuntimeHints;
 import org.springframework.beans.factory.ListableBeanFactory;
@@ -324,6 +323,7 @@ class RepositoryConfigurationDelegateUnitTests {
 
 	static class DummyConfigurationExtension extends RepositoryConfigurationExtensionSupport {
 
+		@Override
 		public String getRepositoryFactoryBeanClassName() {
 			return DummyRepositoryFactoryBean.class.getName();
 		}

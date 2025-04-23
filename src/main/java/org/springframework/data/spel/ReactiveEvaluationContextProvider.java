@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.data.spel;
 import reactor.core.publisher.Mono;
 
 import org.springframework.expression.EvaluationContext;
+import org.springframework.lang.Nullable;
 
 /**
  * Provides a way to access a centrally defined potentially shared {@link EvaluationContext}.
@@ -33,7 +34,7 @@ public interface ReactiveEvaluationContextProvider extends EvaluationContextProv
 	 * @param rootObject the root object to set in the {@link EvaluationContext}.
 	 * @return a mono that emits exactly one {@link EvaluationContext}.
 	 */
-	Mono<? extends EvaluationContext> getEvaluationContextLater(Object rootObject);
+	Mono<? extends EvaluationContext> getEvaluationContextLater(@Nullable Object rootObject);
 
 	/**
 	 * Return a tailored {@link EvaluationContext} built using the given parameter values and considering
@@ -46,7 +47,7 @@ public interface ReactiveEvaluationContextProvider extends EvaluationContextProv
 	 * @return a mono that emits exactly one {@link EvaluationContext}.
 	 * @since 2.4
 	 */
-	default Mono<? extends EvaluationContext> getEvaluationContextLater(Object rootObject,
+	default Mono<? extends EvaluationContext> getEvaluationContextLater(@Nullable Object rootObject,
 			ExpressionDependencies dependencies) {
 		return getEvaluationContextLater(rootObject);
 	}

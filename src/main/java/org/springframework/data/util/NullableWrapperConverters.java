@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2024 the original author or authors.
+ * Copyright 2020-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,9 +64,9 @@ public abstract class NullableWrapperConverters {
 	private static final boolean VAVR_PRESENT = ClassUtils.isPresent("io.vavr.control.Option",
 			NullableWrapperConverters.class.getClassLoader());
 
-	private static final Set<WrapperType> WRAPPER_TYPES = new HashSet<WrapperType>();
-	private static final Set<WrapperType> UNWRAPPER_TYPES = new HashSet<WrapperType>();
-	private static final Set<Converter<Object, Object>> UNWRAPPERS = new HashSet<Converter<Object, Object>>();
+	private static final Set<WrapperType> WRAPPER_TYPES = new HashSet<>();
+	private static final Set<WrapperType> UNWRAPPER_TYPES = new HashSet<>();
+	private static final Set<Converter<Object, Object>> UNWRAPPERS = new HashSet<>();
 	private static final Map<Class<?>, Boolean> supportsCache = new ConcurrentReferenceHashMap<>();
 
 	static {
@@ -410,7 +410,7 @@ public abstract class NullableWrapperConverters {
 
 		INSTANCE;
 
-		private final Function0<Object> alternative = new AbstractFunction0<Object>() {
+		private final Function0<Object> alternative = new AbstractFunction0<>() {
 
 			@Nullable
 			@Override

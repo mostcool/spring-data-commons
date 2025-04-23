@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2024 the original author or authors.
+ * Copyright 2021-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
  * @param <T> the type of the parameter
  * @author Oliver Gierke
  * @author Christoph Strobl
+ * @author Chris Bono
  */
 public class Parameter<T, P extends PersistentProperty<P>> {
 
@@ -90,13 +91,41 @@ public class Parameter<T, P extends PersistentProperty<P>> {
 	}
 
 	/**
-	 * Returns the name of the parameter.
+	 * Returns the name of the parameter (through constructor/method parameter naming).
 	 *
-	 * @return
+	 * @return the name of the parameter.
+	 * @see org.springframework.core.ParameterNameDiscoverer
 	 */
 	@Nullable
 	public String getName() {
 		return name;
+	}
+
+	/**
+	 * Returns whether the parameter has a name.
+	 *
+	 * @return whether the parameter has a name.
+	 * @since 3.5
+	 */
+	public boolean hasName() {
+		return this.name != null;
+	}
+
+	/**
+	 * Returns the required name of the parameter (through constructor/method parameter naming) or throws
+	 * {@link IllegalStateException} if the parameter has no name.
+	 *
+	 * @return the parameter name or throws {@link IllegalStateException} if the parameter does not have a name.
+	 * @since 3.5
+	 * @see org.springframework.core.ParameterNameDiscoverer
+	 */
+	public String getRequiredName() {
+
+		if (!hasName()) {
+			throw new IllegalStateException("No name associated with this parameter");
+		}
+
+		return getName();
 	}
 
 	/**

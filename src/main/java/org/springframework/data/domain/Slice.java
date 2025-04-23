@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2024 the original author or authors.
+ * Copyright 2014-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,6 +136,7 @@ public interface Slice<T> extends Streamable<T> {
 	 * @return a new {@link Slice} with the content of the current one mapped by the given {@link Converter}.
 	 * @since 1.10
 	 */
+	@Override
 	<U> Slice<U> map(Function<? super T, ? extends U> converter);
 
 	/**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 the original author or authors.
+ * Copyright 2017-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ class SelectionSet<T> {
 	}
 
 	public static <T> SelectionSet<T> of(Collection<T> collection, Function<Collection<T>, Optional<T>> fallback) {
-		return new SelectionSet<T>(collection, fallback);
+		return new SelectionSet<>(collection, fallback);
 	}
 
 	/**
@@ -74,7 +74,7 @@ class SelectionSet<T> {
 	SelectionSet<T> filterIfNecessary(Predicate<T> predicate) {
 
 		return findUniqueResult().map(it -> this).orElseGet(
-				() -> new SelectionSet<T>(collection.stream().filter(predicate).collect(Collectors.toList()), fallback));
+				() -> new SelectionSet<>(collection.stream().filter(predicate).collect(Collectors.toList()), fallback));
 	}
 
 	private static <S> Function<Collection<S>, Optional<S>> defaultFallback() {

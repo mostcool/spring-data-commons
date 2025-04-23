@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2024 the original author or authors.
+ * Copyright 2011-2025 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public abstract class CdiRepositoryBean<T> implements Bean<T>, PassivationCapabl
 
 		Assert.notNull(qualifiers, "Qualifiers must not be null");
 		Assert.notNull(beanManager, "BeanManager must not be null");
-		Assert.notNull(repositoryType, "Repoitory type must not be null");
+		Assert.notNull(repositoryType, "Repository type must not be null");
 		Assert.isTrue(repositoryType.isInterface(), "RepositoryType must be an interface");
 
 		this.qualifiers = qualifiers;
@@ -127,7 +127,7 @@ public abstract class CdiRepositoryBean<T> implements Bean<T>, PassivationCapabl
 
 		Assert.notNull(qualifiers, "Qualifiers must not be null");
 		Assert.notNull(beanManager, "BeanManager must not be null");
-		Assert.notNull(repositoryType, "Repoitory type must not be null");
+		Assert.notNull(repositoryType, "Repository type must not be null");
 		Assert.isTrue(repositoryType.isInterface(), "RepositoryType must be an interface");
 
 		this.qualifiers = qualifiers;
