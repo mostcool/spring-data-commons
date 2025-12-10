@@ -19,9 +19,9 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Set;
 
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.repository.core.support.RepositoryFragment;
 import org.springframework.data.repository.support.Repositories;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Metadata for repository interfaces.
@@ -91,9 +91,25 @@ public interface RepositoryMetadata {
 	 *
 	 * @param method
 	 * @return
+	 * @see #getReturnedDomainTypeInformation(Method)
 	 * @see #getReturnType(Method)
 	 */
 	Class<?> getReturnedDomainClass(Method method);
+
+	/**
+	 * Returns the domain type information returned by the given {@link Method}. In contrast to
+	 * {@link #getReturnType(Method)}, this method extracts the type from {@link Collection}s and
+	 * {@link org.springframework.data.domain.Page} as well.
+	 *
+	 * @param method
+	 * @return
+	 * @see #getReturnedDomainClass(Method)
+	 * @see #getReturnType(Method)
+	 * @since 4.0
+	 */
+	default TypeInformation<?> getReturnedDomainTypeInformation(Method method) {
+		return TypeInformation.of(getReturnedDomainClass(method));
+	}
 
 	/**
 	 * Returns {@link CrudMethods} meta information for the repository.

@@ -15,6 +15,7 @@
  */
 package org.springframework.data.querydsl;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +38,7 @@ import com.querydsl.core.types.Path;
  */
 public class QSort extends Sort implements Serializable {
 
-	private static final long serialVersionUID = -6701117396842171930L;
+	private static final @Serial long serialVersionUID = -6701117396842171930L;
 	private static final QSort UNSORTED = new QSort();
 
 	private final List<OrderSpecifier<?>> orderSpecifiers;
@@ -56,7 +57,6 @@ public class QSort extends Sort implements Serializable {
 	 *
 	 * @param orderSpecifiers must not be {@literal null}.
 	 */
-	@SuppressWarnings("deprecation")
 	public QSort(List<OrderSpecifier<?>> orderSpecifiers) {
 
 		super(toOrders(orderSpecifiers));

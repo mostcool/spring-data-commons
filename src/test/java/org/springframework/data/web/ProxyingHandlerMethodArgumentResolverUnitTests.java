@@ -16,22 +16,33 @@
 package org.springframework.data.web;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import example.SampleInterface;
 
+import java.lang.reflect.Method;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.core.log.LogAccessor;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Unit tests for {@link ProxyingHandlerMethodArgumentResolver}.
  *
  * @author Oliver Gierke
+ * @author Chris Bono
+ * @author Mark Paluch
  * @soundtrack Karlijn Langendijk & Sönke Meinen - Englishman In New York (Sting,
  *             https://www.youtube.com/watch?v=O7LZsqrnaaA)
  */
@@ -41,7 +52,7 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 			() -> new DefaultConversionService(), true);
 
 	@Test // DATACMNS-776
-	void supportAnnotatedInterface() throws Exception {
+	void supportAnnotatedInterface() {
 
 		var parameter = getParameter("with", AnnotatedInterface.class);
 
@@ -49,7 +60,7 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 	}
 
 	@Test // DATACMNS-776
-	void supportsUnannotatedInterfaceFromUserPackage() throws Exception {
+	void supportsUnannotatedInterfaceFromUserPackage() {
 
 		var parameter = getParameter("with", SampleInterface.class);
 
@@ -57,7 +68,7 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 	}
 
 	@Test // DATACMNS-776
-	void doesNotSupportUnannotatedInterfaceFromSpringNamespace() throws Exception {
+	void doesNotSupportUnannotatedInterfaceFromSpringNamespace() {
 
 		var parameter = getParameter("with", UnannotatedInterface.class);
 
@@ -65,7 +76,7 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 	}
 
 	@Test // DATACMNS-776
-	void doesNotSupportCoreJavaType() throws Exception {
+	void doesNotSupportCoreJavaType() {
 
 		var parameter = getParameter("with", List.class);
 
@@ -73,7 +84,7 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 	}
 
 	@Test // GH-2937
-	void doesNotSupportForeignSpringAnnotations() throws Exception {
+	void doesNotSupportForeignSpringAnnotations() {
 
 		var parameter = getParameter("withForeignAnnotation", SampleInterface.class);
 
@@ -81,17 +92,87 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 	}
 
 	@Test // GH-2937
-	void doesSupportAtModelAttribute() throws Exception {
+	void doesSupportAtModelAttribute() {
 
 		var parameter = getParameter("withModelAttribute", SampleInterface.class);
 
 		assertThat(resolver.supportsParameter(parameter)).isTrue();
 	}
 
+	@Test // GH-3258
+	void doesNotSupportAtModelAttributeForMultipartParam() {
+
+		var parameter = getParameter("withModelAttributeMultipart", MultipartFile.class);
+
+		assertThat(resolver.supportsParameter(parameter)).isFalse();
+	}
+
+	@Test // GH-3258
+	void doesSupportAtProjectedPayload() {
+
+		var parameter = getParameter("withProjectedPayload", SampleInterface.class);
+
+		assertThat(resolver.supportsParameter(parameter)).isTrue();
+	}
+
+	@Test // GH-3258
+	void doesNotSupportAtProjectedPayloadForMultipartParam() {
+
+		var parameter = getParameter("withProjectedPayloadMultipart", MultipartFile.class);
+
+		assertThat(resolver.supportsParameter(parameter)).isFalse();
+	}
+
+	@Test // GH-3300
+	@SuppressWarnings("unchecked")
+	void deprecationLoggerOnlyLogsOncePerParameter() {
+
+		var parameter = getParameter("withModelAttribute", SampleInterface.class);
+
+		// Spy on the actual logger
+		var actualLoggerSpy = spy(new LogAccessor(ProxyingHandlerMethodArgumentResolver.class));
+		ReflectionTestUtils.setField(ProxyingHandlerMethodArgumentResolver.class, "LOGGER", actualLoggerSpy,
+				LogAccessor.class);
+
+		// Invoke twice but should only log the first time
+		assertThat(resolver.supportsParameter(parameter)).isTrue();
+		verify(actualLoggerSpy, times(1)).warn(any(Supplier.class));
+		assertThat(resolver.supportsParameter(parameter)).isTrue();
+		verifyNoMoreInteractions(actualLoggerSpy);
+	}
+
+	@ParameterizedTest // GH-3300
+	@ValueSource(strings = { "withProjectedPayload", "withAnnotatedInterface" })
+	void shouldNotLogDeprecationForValidUsage(String methodName) {
+
+		var parameter = getParameter(methodName);
+
+		// Spy on the actual logger
+		var actualLoggerSpy = spy(new LogAccessor(ProxyingHandlerMethodArgumentResolver.class));
+		ReflectionTestUtils.setField(ProxyingHandlerMethodArgumentResolver.class, "LOGGER", actualLoggerSpy,
+				LogAccessor.class);
+
+		// Invoke twice but should only log the first time
+		assertThat(resolver.supportsParameter(parameter)).isTrue();
+		verifyNoInteractions(actualLoggerSpy);
+	}
+
 	private static MethodParameter getParameter(String methodName, Class<?> parameterType) {
 
 		var method = ReflectionUtils.findMethod(Controller.class, methodName, parameterType);
 		return new MethodParameter(method, 0);
+	}
+
+	private static MethodParameter getParameter(String methodName) {
+
+		for (Method method : Controller.class.getMethods()) {
+
+			if (method.getName().equals(methodName)) {
+				return new MethodParameter(method, 0);
+			}
+		}
+
+		throw new NoSuchMethodError(methodName);
 	}
 
 	@ProjectedPayload
@@ -103,6 +184,8 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 
 		void with(AnnotatedInterface param);
 
+		void withAnnotatedInterface(@ModelAttribute AnnotatedInterface param);
+
 		void with(UnannotatedInterface param);
 
 		void with(SampleInterface param);
@@ -112,5 +195,12 @@ class ProxyingHandlerMethodArgumentResolverUnitTests {
 		void withForeignAnnotation(@Autowired SampleInterface param);
 
 		void withModelAttribute(@ModelAttribute SampleInterface param);
+
+		void withModelAttributeMultipart(@ModelAttribute MultipartFile file);
+
+		void withProjectedPayload(@ProjectedPayload SampleInterface param);
+
+		void withProjectedPayloadMultipart(@ProjectedPayload MultipartFile file);
 	}
+
 }

@@ -21,12 +21,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.TemplateVariable;
 import org.springframework.hateoas.TemplateVariables;
 import org.springframework.hateoas.server.mvc.UriComponentsContributor;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponents;
@@ -98,7 +99,7 @@ public class HateoasPageableHandlerMethodArgumentResolver extends PageableHandle
 	}
 
 	@Override
-	public void enhance(UriComponentsBuilder builder, @Nullable MethodParameter parameter, Object value) {
+	public void enhance(UriComponentsBuilder builder, @Nullable MethodParameter parameter, @Nullable Object value) {
 
 		Assert.notNull(builder, "UriComponentsBuilder must not be null");
 

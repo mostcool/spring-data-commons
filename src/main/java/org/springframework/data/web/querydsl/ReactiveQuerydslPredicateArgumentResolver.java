@@ -15,13 +15,11 @@
  */
 package org.springframework.data.web.querydsl;
 
-import java.util.List;
-import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.MethodParameter;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.querydsl.binding.QuerydslBindingsFactory;
-import org.springframework.lang.Nullable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.BindingContext;
@@ -48,8 +46,7 @@ public class ReactiveQuerydslPredicateArgumentResolver extends QuerydslPredicate
 	}
 
 	@Override
-	@Nullable
-	public Object resolveArgumentValue(MethodParameter parameter, BindingContext bindingContext,
+	public @Nullable Object resolveArgumentValue(MethodParameter parameter, BindingContext bindingContext,
 			ServerWebExchange exchange) {
 
 		MultiValueMap<String, String> queryParameters = getQueryParameters(exchange);
@@ -64,9 +61,7 @@ public class ReactiveQuerydslPredicateArgumentResolver extends QuerydslPredicate
 		MultiValueMap<String, String> queryParams = exchange.getRequest().getQueryParams();
 		MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>(queryParams.size());
 
-		for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
-			parameters.put(entry.getKey(), entry.getValue());
-		}
+		parameters.putAll(queryParams);
 
 		return parameters;
 	}

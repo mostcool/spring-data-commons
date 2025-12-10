@@ -21,7 +21,6 @@ import java.lang.annotation.Annotation;
 
 import org.springframework.aop.framework.ProxyFactoryBean;
 import org.springframework.aop.target.LazyInitTargetSource;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
@@ -29,7 +28,6 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.data.auditing.AuditingHandler;
-import org.springframework.data.auditing.CurrentDateTimeProvider;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -42,6 +40,7 @@ import org.springframework.util.StringUtils;
  * @author Thomas Darimont
  * @author Oliver Gierke
  * @author Francisco Soler
+ * @author Jaeyeon Kim
  */
 public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBeanDefinitionRegistrar {
 
@@ -65,7 +64,7 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 	 *
 	 * @param configuration must not be {@literal null}.
 	 * @param registry must not be {@literal null}.
-	 * @return
+	 * @return the {@link AbstractBeanDefinition} for the {@link AuditingConfiguration}.
 	 */
 	protected AbstractBeanDefinition registerAuditHandlerBeanDefinition(AuditingConfiguration configuration,
 			BeanDefinitionRegistry registry) {
@@ -96,7 +95,7 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 	 * implementations.
 	 *
 	 * @param configuration must not be {@literal null}.
-	 * @return
+	 * @return the {@link BeanDefinitionBuilder} for the {@link AuditingConfiguration}.
 	 */
 	protected BeanDefinitionBuilder getAuditHandlerBeanDefinitionBuilder(AuditingConfiguration configuration) {
 
@@ -117,11 +116,11 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 	protected BeanDefinitionBuilder configureDefaultAuditHandlerAttributes(AuditingConfiguration configuration,
 			BeanDefinitionBuilder builder) {
 
+		builder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
+
 		if (StringUtils.hasText(configuration.getAuditorAwareRef())) {
 			builder.addPropertyValue(AUDITOR_AWARE,
 					createLazyInitTargetSourceBeanDefinition(configuration.getAuditorAwareRef()));
-		} else {
-			builder.setAutowireMode(AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE);
 		}
 
 		builder.addPropertyValue(SET_DATES, configuration.isSetDates());
@@ -129,8 +128,6 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 
 		if (StringUtils.hasText(configuration.getDateTimeProviderRef())) {
 			builder.addPropertyReference(DATE_TIME_PROVIDER, configuration.getDateTimeProviderRef());
-		} else {
-			builder.addPropertyValue(DATE_TIME_PROVIDER, CurrentDateTimeProvider.INSTANCE);
 		}
 
 		builder.setRole(AbstractBeanDefinition.ROLE_INFRASTRUCTURE);
@@ -142,7 +139,7 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 	 * Retrieve auditing configuration from the given {@link AnnotationMetadata}.
 	 *
 	 * @param annotationMetadata will never be {@literal null}.
-	 * @return
+	 * @return a new {@link AnnotationAuditingConfiguration}.
 	 */
 	protected AuditingConfiguration getConfiguration(AnnotationMetadata annotationMetadata) {
 		return new AnnotationAuditingConfiguration(annotationMetadata, getAnnotation());
@@ -167,7 +164,7 @@ public abstract class AuditingBeanDefinitionRegistrarSupport implements ImportBe
 	/**
 	 * Return the name to be used to register the {@link AuditingHandler} under.
 	 *
-	 * @return
+	 * @return name of the {@link AuditingHandler} bean.
 	 */
 	protected abstract String getAuditingHandlerBeanName();
 

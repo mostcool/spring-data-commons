@@ -29,10 +29,13 @@ import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -47,14 +50,16 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.NativeDetector;
 import org.springframework.core.env.Environment;
+import org.springframework.data.core.CustomCollections;
+import org.springframework.data.core.NullableWrapperConverters;
+import org.springframework.data.core.PropertyPath;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.ManagedTypes;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PersistentPropertyPath;
 import org.springframework.data.mapping.PersistentPropertyPaths;
-import org.springframework.data.mapping.PropertyPath;
-import org.springframework.data.mapping.model.BeanWrapperPropertyAccessorFactory;
 import org.springframework.data.mapping.model.ClassGeneratingPropertyAccessorFactory;
 import org.springframework.data.mapping.model.EntityInstantiators;
 import org.springframework.data.mapping.model.InstantiationAwarePropertyAccessorFactory;
@@ -64,13 +69,9 @@ import org.springframework.data.mapping.model.Property;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.spel.EvaluationContextProvider;
 import org.springframework.data.spel.ExtensionAwareEvaluationContextProvider;
-import org.springframework.data.util.CustomCollections;
 import org.springframework.data.util.KotlinReflectionUtils;
-import org.springframework.data.util.NullableWrapperConverters;
 import org.springframework.data.util.Optionals;
 import org.springframework.data.util.Streamable;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.ReflectionUtils.FieldCallback;
@@ -93,6 +94,7 @@ import org.springframework.util.ReflectionUtils.FieldFilter;
  * @author Mark Paluch
  * @author Mikael Klamra
  * @author Christoph Strobl
+ * @author Kamil Krzywański
  */
 public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?, P>, P extends PersistentProperty<P>>
 		implements MappingContext<E, P>, ApplicationEventPublisherAware, ApplicationContextAware, BeanFactoryAware,
@@ -124,7 +126,7 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 
 		EntityInstantiators instantiators = new EntityInstantiators();
 		PersistentPropertyAccessorFactory accessorFactory = NativeDetector.inNativeImage()
-				? BeanWrapperPropertyAccessorFactory.INSTANCE
+				? new ReflectionFallbackPersistentPropertyAccessorFactory()
 				: new ClassGeneratingPropertyAccessorFactory();
 
 		this.persistentPropertyAccessorFactory = new InstantiationAwarePropertyAccessorFactory(accessorFactory,
@@ -141,7 +143,7 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 	 * already set.
 	 *
 	 * @param applicationContext the ApplicationContext object to be used by this object.
-	 * @throws BeansException
+	 * @throws BeansException in case of initialization errors.
 	 */
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -159,7 +161,7 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 
 	/**
 	 * @param beanFactory owning BeanFactory.
-	 * @throws BeansException
+	 * @throws BeansException in case of initialization errors.
 	 * @since 3.3
 	 */
 	@Override
@@ -423,8 +425,9 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 
 			entity = doAddPersistentEntity(typeInformation);
 
-		} catch (BeansException e) {
-			throw new MappingException(e.getMessage(), e);
+		} catch (RuntimeException e) {
+			throw new MappingException(
+					"Cannot create PersistentEntity for '%s'".formatted(typeInformation.getType().getName()), e);
 		} finally {
 			write.unlock();
 		}
@@ -565,9 +568,9 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 
 	/**
 	 * Returns whether a {@link PersistentEntity} instance should be created for the given {@link TypeInformation}. By
-	 * default this will reject all types considered simple and non-supported Kotlin classes, but it might be necessary to
-	 * tweak that in case you have registered custom converters for top level types (which renders them to be considered
-	 * simple) but still need meta-information about them.
+	 * default, this will reject all types considered simple and non-supported Kotlin classes, but it might be necessary
+	 * to tweak that in case you have registered custom converters for top level types (which renders them to be
+	 * considered simple) but still need meta-information about them.
 	 *
 	 * @param type will never be {@literal null}.
 	 * @return
@@ -673,7 +676,7 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 			});
 		}
 
-		protected boolean shouldSkipOverrideProperty(P property) {
+		private boolean shouldSkipOverrideProperty(P property) {
 
 			P existingProperty = entity.getPersistentProperty(property.getName());
 
@@ -758,21 +761,22 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 	 *
 	 * @author Oliver Gierke
 	 */
-	static enum PersistentPropertyFilter implements FieldFilter {
+	enum PersistentPropertyFilter implements FieldFilter {
 
 		INSTANCE;
 
-		private static final Streamable<PropertyMatch> UNMAPPED_PROPERTIES;
+		private static final Collection<PropertyMatch> UNMAPPED_PROPERTIES;
 
 		static {
 
 			Set<PropertyMatch> matches = new HashSet<>();
 			matches.add(new PropertyMatch("class", null));
 			matches.add(new PropertyMatch("this\\$.*", null));
+			matches.add(new PropertyMatch("\\$\\$_.*", null));
 			matches.add(new PropertyMatch("metaClass", "groovy.lang.MetaClass"));
 			matches.add(new KotlinDataClassPropertyMatch(".*\\$delegate", null));
 
-			UNMAPPED_PROPERTIES = Streamable.of(matches);
+			UNMAPPED_PROPERTIES = matches;
 		}
 
 		@Override
@@ -782,8 +786,13 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 				return false;
 			}
 
-			return UNMAPPED_PROPERTIES.stream()//
-					.noneMatch(it -> it.matches(field));
+			for (PropertyMatch property : UNMAPPED_PROPERTIES) {
+				if (property.matches(field)) {
+					return false;
+				}
+			}
+
+			return true;
 		}
 
 		/**
@@ -812,7 +821,7 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 		 */
 		static class PropertyMatch {
 
-			private final @Nullable String namePattern;
+			private final @Nullable Pattern namePatternRegex;
 			private final @Nullable String typeName;
 
 			/**
@@ -824,9 +833,9 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 			 */
 			public PropertyMatch(@Nullable String namePattern, @Nullable String typeName) {
 
-				Assert.isTrue(!((namePattern == null) && (typeName == null)), "Either name pattern or type name must be given");
+				Assert.isTrue(namePattern != null || typeName != null, "Either name pattern or type name must be given");
 
-				this.namePattern = namePattern;
+				this.namePatternRegex = namePattern == null ? null : Pattern.compile(namePattern);
 				this.typeName = typeName;
 			}
 
@@ -862,11 +871,11 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 				Assert.notNull(name, "Name must not be null");
 				Assert.notNull(type, "Type must not be null");
 
-				if ((namePattern != null) && !name.matches(namePattern)) {
+				if (namePatternRegex != null && !namePatternRegex.matcher(name).matches()) {
 					return false;
 				}
 
-				if ((typeName != null) && !type.getName().equals(typeName)) {
+				if (typeName != null && !type.getName().equals(typeName)) {
 					return false;
 				}
 
@@ -907,7 +916,9 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 
 				return super.matches(property);
 			}
+
 		}
+
 	}
 
 }

@@ -15,10 +15,11 @@
  */
 package org.springframework.data.mapping.model;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.convert.ConversionService;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -73,25 +74,10 @@ public class ValueExpressionParameterValueProvider<P extends PersistentProperty<
 	 * @param object the value to massage, will never be {@literal null}.
 	 * @param parameter the {@link Parameter} we create the value for
 	 * @return the converted parameter value.
-	 * @deprecated since 3.3, use {@link #potentiallyConvertExpressionValue(Object, Parameter)} instead.
-	 */
-	@Nullable
-	@Deprecated(since = "3.3")
-	protected <T> T potentiallyConvertSpelValue(Object object, Parameter<T, P> parameter) {
-		return conversionService.convert(object, parameter.getRawType());
-	}
-
-	/**
-	 * Hook to allow to massage the value resulting from the Spel expression evaluation. Default implementation will
-	 * leverage the configured {@link ConversionService} to massage the value into the parameter type.
-	 *
-	 * @param object the value to massage, will never be {@literal null}.
-	 * @param parameter the {@link Parameter} we create the value for
-	 * @return the converted parameter value.
 	 * @since 3.3
 	 */
 	@Nullable
 	protected <T> T potentiallyConvertExpressionValue(Object object, Parameter<T, P> parameter) {
-		return potentiallyConvertSpelValue(object, parameter);
+		return conversionService.convert(object, parameter.getRawType());
 	}
 }

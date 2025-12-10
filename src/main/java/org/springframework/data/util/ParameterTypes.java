@@ -21,12 +21,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.convert.TypeDescriptor;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ObjectUtils;
@@ -41,7 +41,9 @@ import org.springframework.util.TypeUtils;
  * @author Oliver Drotbohm
  * @since 2.1.7
  * @soundtrack Signs, High Times - Tedeschi Trucks Band (Signs)
+ * @deprecated since 4.0, this class is not intended for public use and will be removed in future versions.
  */
+@Deprecated(since = "4.0", forRemoval = true)
 public class ParameterTypes {
 
 	private static final TypeDescriptor OBJECT_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
@@ -58,7 +60,7 @@ public class ParameterTypes {
 	private ParameterTypes(List<TypeDescriptor> types) {
 
 		this.types = types;
-		this.alternatives = Lazy.of(() -> getAlternatives());
+		this.alternatives = Lazy.of(this::getAlternatives);
 	}
 
 	public ParameterTypes(List<TypeDescriptor> types, Lazy<Collection<ParameterTypes>> alternatives) {
@@ -123,8 +125,13 @@ public class ParameterTypes {
 	 */
 	private boolean hasValidAlternativeFor(Method method) {
 
-		return alternatives.get().stream().anyMatch(it -> it.areValidTypes(method)) //
-				|| getParent().map(parent -> parent.hasValidAlternativeFor(method)).orElse(false);
+		if (alternatives.get().stream().anyMatch(it -> it.areValidTypes(method))) {
+			return true;
+		}
+
+		ParameterTypes parent = getParent();
+
+		return parent != null && parent.hasValidAlternativeFor(method);
 	}
 
 	/**
@@ -137,7 +144,10 @@ public class ParameterTypes {
 		List<ParameterTypes> result = new ArrayList<>();
 		result.addAll(alternatives.get());
 
-		getParent().ifPresent(it -> result.addAll(it.getAllAlternatives()));
+		ParameterTypes parent = getParent();
+		if (parent != null) {
+			result.addAll(parent.getAllAlternatives());
+		}
 
 		return result;
 	}
@@ -154,7 +164,7 @@ public class ParameterTypes {
 
 		return Arrays.stream(types) //
 				.map(TypeDescriptor::valueOf) //
-				.collect(Collectors.toList())//
+				.toList()//
 				.equals(this.types);
 	}
 
@@ -191,24 +201,24 @@ public class ParameterTypes {
 				.collect(Collectors.joining(", ", "(", ")"));
 	}
 
-	protected Optional<ParameterTypes> getParent() {
-		return types.isEmpty() ? Optional.empty() : getParent(getTail());
+	protected @Nullable ParameterTypes getParent() {
+		return types.isEmpty() ? null : getParent(getTail());
 	}
 
-	protected final Optional<ParameterTypes> getParent(TypeDescriptor tail) {
+	protected final @Nullable ParameterTypes getParent(TypeDescriptor tail) {
 
 		return types.size() <= 1 //
-				? Optional.empty() //
-				: Optional.of(ParentParameterTypes.of(types.subList(0, types.size() - 1), tail));
+				? null //
+				: ParentParameterTypes.of(types.subList(0, types.size() - 1), tail);
 	}
 
-	protected Optional<ParameterTypes> withLastVarArgs() {
+	protected @Nullable ParameterTypes withLastVarArgs() {
 
 		TypeDescriptor lastDescriptor = types.get(types.size() - 1);
 
 		return lastDescriptor.isArray() //
-				? Optional.empty() //
-				: Optional.ofNullable(withVarArgs(lastDescriptor));
+				? null //
+				: withVarArgs(lastDescriptor);
 	}
 
 	@SuppressWarnings("null")
@@ -216,7 +226,7 @@ public class ParameterTypes {
 
 		TypeDescriptor lastDescriptor = types.get(types.size() - 1);
 
-		if (lastDescriptor.isArray() && lastDescriptor.getElementTypeDescriptor().equals(descriptor)) {
+		if (lastDescriptor.isArray() && descriptor.equals(lastDescriptor.getElementTypeDescriptor())) {
 			return this;
 		}
 
@@ -234,7 +244,10 @@ public class ParameterTypes {
 
 		List<ParameterTypes> alternatives = new ArrayList<>();
 
-		withLastVarArgs().ifPresent(alternatives::add);
+		ParameterTypes parameterTypes = withLastVarArgs();
+		if (parameterTypes != null) {
+			alternatives.add(parameterTypes);
+		}
 
 		ParameterTypes objectVarArgs = withVarArgs(OBJECT_DESCRIPTOR);
 
@@ -314,15 +327,15 @@ public class ParameterTypes {
 		}
 
 		@Override
-		protected Optional<ParameterTypes> getParent() {
+		protected @Nullable ParameterTypes getParent() {
 			return super.getParent(tail);
 		}
 
 		@Override
-		protected Optional<ParameterTypes> withLastVarArgs() {
+		protected @Nullable ParameterTypes withLastVarArgs() {
 
 			return !tail.isAssignableTo(super.getTail()) //
-					? Optional.empty() //
+					? null //
 					: super.withLastVarArgs();
 		}
 

@@ -18,9 +18,11 @@ package org.springframework.data.web;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.data.domain.Sort;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
@@ -46,6 +48,7 @@ public class SortHandlerMethodArgumentResolver extends SortHandlerMethodArgument
 		return Sort.class.equals(parameter.getParameterType());
 	}
 
+	@NonNull
 	@Override
 	public Sort resolveArgument(MethodParameter parameter, @Nullable ModelAndViewContainer mavContainer,
 			NativeWebRequest webRequest, @Nullable WebDataBinderFactory binderFactory) {

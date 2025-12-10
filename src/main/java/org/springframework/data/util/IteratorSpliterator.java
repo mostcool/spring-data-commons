@@ -21,6 +21,8 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * A Spliterator using a given Iterator for element operations. The spliterator implements {@code trySplit} to permit
  * limited parallelism.
@@ -45,7 +47,7 @@ class IteratorSpliterator<T> implements Spliterator<T> {
 	}
 
 	@Override
-	public Spliterator<T> trySplit() {
+	public @Nullable Spliterator<T> trySplit() {
 		/*
 		 * Split into arrays of arithmetically increasing batch
 		 * sizes.  This will only improve parallel performance if
@@ -108,7 +110,7 @@ class IteratorSpliterator<T> implements Spliterator<T> {
 	}
 
 	@Override
-	public Comparator<? super T> getComparator() {
+	public @Nullable Comparator<? super T> getComparator() {
 		if (hasCharacteristics(Spliterator.SORTED)) {
 			return null;
 		}

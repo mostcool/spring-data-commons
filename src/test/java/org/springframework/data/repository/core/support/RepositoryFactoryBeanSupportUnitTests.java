@@ -20,11 +20,13 @@ import static org.mockito.Mockito.*;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.Repository;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -32,6 +34,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  *
  * @author Oliver Gierke
  * @author Thomas Darimont
+ * @author Mark Paluch
  */
 class RepositoryFactoryBeanSupportUnitTests {
 
@@ -39,14 +42,14 @@ class RepositoryFactoryBeanSupportUnitTests {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	void setsConfiguredClassLoaderOnRepositoryFactory() {
 
-		var classLoader = mock(ClassLoader.class);
+		ClassLoader classLoader = mock(ClassLoader.class);
 
 		RepositoryFactoryBeanSupport factoryBean = new DummyRepositoryFactoryBean(SampleRepository.class);
 		factoryBean.setBeanClassLoader(classLoader);
 		factoryBean.setLazyInit(true);
 		factoryBean.afterPropertiesSet();
 
-		var factory = ReflectionTestUtils.getField(factoryBean, "factory");
+		Object factory = ReflectionTestUtils.getField(factoryBean, "factory");
 		assertThat(ReflectionTestUtils.getField(factory, "classLoader")).isEqualTo(classLoader);
 	}
 
@@ -66,7 +69,7 @@ class RepositoryFactoryBeanSupportUnitTests {
 				new DummyRepositoryFactoryBean<>(SampleWithQuerydslRepository.class);
 		factoryBean.afterPropertiesSet();
 
-		var information = factoryBean.getRepositoryInformation();
+		RepositoryInformation information = factoryBean.getRepositoryInformation();
 
 		assertThat(information.getQueryMethods()).isEmpty();
 	}
@@ -97,7 +100,7 @@ class RepositoryFactoryBeanSupportUnitTests {
 	@Test // DATACMNS-1345
 	void reportsMappingContextUnavailableForPersistentEntityLookup() {
 
-		var bean = new RepositoryFactoryBeanSupport<SampleRepository, Object, Long>(
+		RepositoryFactoryBeanSupport<SampleRepository, Object, Long> bean = new RepositoryFactoryBeanSupport<>(
 				SampleRepository.class) {
 
 			@Override
@@ -110,6 +113,26 @@ class RepositoryFactoryBeanSupportUnitTests {
 
 		assertThatIllegalStateException() //
 				.isThrownBy(() -> bean.getPersistentEntity());
+	}
+
+	@Test // GH-3424
+	void setsApplicationEventPublisher() {
+
+		RepositoryFactoryBeanSupport<SampleRepository, Object, Long> bean = new RepositoryFactoryBeanSupport<>(
+				SampleRepository.class) {
+
+			@Override
+			protected RepositoryFactorySupport createRepositoryFactory() {
+				return new DummyRepositoryFactory(mock(SampleRepository.class));
+			}
+		};
+
+		bean.setApplicationEventPublisher(event -> {});
+		bean.setLazyInit(true);
+		bean.afterPropertiesSet();
+
+		Object factory = ReflectionTestUtils.getField(bean, "factory");
+		assertThat(factory).extracting("publisher").isNotNull();
 	}
 
 	interface SampleRepository extends Repository<Object, Long> {

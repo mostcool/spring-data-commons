@@ -27,9 +27,9 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.querydsl.EntityPathResolver;
 import org.springframework.data.repository.support.Repositories;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
 import com.querydsl.core.types.EntityPath;
@@ -181,7 +181,7 @@ public class QuerydslBindingsFactory implements ApplicationContextAware {
 	 * Obtains the {@link QuerydslBinderCustomizer} for the given domain type. Will inspect the given annotation for a
 	 * dedicated configured one or consider the domain type's repository.
 	 *
-	 * @param annotation
+	 * @param customizer
 	 * @param domainType
 	 * @return
 	 */

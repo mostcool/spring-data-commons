@@ -15,8 +15,9 @@
  */
 package org.springframework.data.mapping.model;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * SPI for components to provide values for as {@link PersistentProperty}.
@@ -30,7 +31,7 @@ public interface PropertyValueProvider<P extends PersistentProperty<P>> {
 	 * Returns a value for the given {@link PersistentProperty}.
 	 *
 	 * @param property will never be {@literal null}.
-	 * @return
+	 * @return the property value. Can be {@literal null}.
 	 */
 	@Nullable
 	<T> T getPropertyValue(P property);

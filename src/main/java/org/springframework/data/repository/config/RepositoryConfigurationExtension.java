@@ -18,12 +18,13 @@ package org.springframework.data.repository.config;
 import java.util.Collection;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.aot.BeanRegistrationAotProcessor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.lang.NonNull;
 
 /**
  * SPI to implement store specific extension to the repository bean definition registration process.
@@ -42,8 +43,7 @@ public interface RepositoryConfigurationExtension {
 	 * @since 3.0
 	 */
 	default String getModuleIdentifier() {
-
-		return getModuleName().toLowerCase(Locale.ENGLISH).replace(' ', '-');
+		return getModuleName().toLowerCase(Locale.ROOT).replace(' ', '-');
 	}
 
 	/**
@@ -62,7 +62,6 @@ public interface RepositoryConfigurationExtension {
 	 * @see org.springframework.beans.factory.aot.BeanRegistrationAotProcessor
 	 * @since 3.0
 	 */
-	@NonNull
 	default Class<? extends BeanRegistrationAotProcessor> getRepositoryAotProcessor() {
 		return RepositoryRegistrationAotProcessor.class;
 	}
@@ -88,6 +87,16 @@ public interface RepositoryConfigurationExtension {
 	 * @return will never be {@literal null}.
 	 */
 	String getDefaultNamedQueryLocation();
+
+	/**
+	 * Returns the {@link String name} of the repository base class to be used.
+	 *
+	 * @return can be {@literal null} if the base class cannot be provided.
+	 * @since 4.0
+	 */
+	default @Nullable String getRepositoryBaseClassName() {
+		return null;
+	}
 
 	/**
 	 * Returns the {@link String name} of the repository factory class to be used.

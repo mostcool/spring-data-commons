@@ -20,8 +20,6 @@ import java.lang.annotation.ElementType;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,31 +27,33 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.lang.Contract;
 import org.springframework.lang.NonNullApi;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.MultiValueMap;
 
 /**
  * Utility methods to introspect nullability rules declared in packages, classes and methods.
  * <p>
- * Nullability rules are declared using {@link NonNullApi}, {@link Nullable}, and JSR-305
+ * Nullability rules are declared using {@code Nullable}, {@code NonNullApi}, and JSR-305
  * {@code javax.annotation.Nonnull} annotations. By default (no annotation use), a package and its types are considered
  * allowing {@literal null} values in return values and method parameters. Nullability rules are expressed by annotating
- * a package with a JSR-305 meta annotation such as Spring's {@link NonNullApi}. All types of the package inherit the
- * package rule. Subpackages do not inherit nullability rules and must be annotated themself.
+ * a package with a JSR-305 meta annotation such as Spring's {@code NonNullApi}. All types of the package inherit the
+ * package rule. Subpackages do not inherit nullability rules and must be annotated themselves.
  *
  * <pre class="code">
- * &#64;org.springframework.lang.NonNullApi
+ * &#64;org.jspecify.annotations.NullMarked
  * package com.example;
  * </pre>
  *
- * {@link Nullable} selectively permits {@literal null} values for method return values or method parameters by
+ * {@code  Nullable} selectively permits {@literal null} values for method return values or method parameters by
  * annotating the method respectively the parameters:
  *
  * <pre class="code">
@@ -77,7 +77,10 @@ import org.springframework.util.MultiValueMap;
  * @since 2.0
  * @see NonNullApi
  * @see Nullable
+ * @deprecated since 4.0 in favor of {@link org.springframework.core.Nullness} fully using JSpecify annotations instead
+ *             of Spring Framework's own {@literal @Nullable} and {@literal @NonNullApi} annotations.
  */
+@Deprecated(since = "4.0")
 public abstract class NullableUtils {
 
 	private static final String NON_NULL_CLASS_NAME = "javax.annotation.Nonnull";
@@ -89,8 +92,8 @@ public abstract class NullableUtils {
 	private static final Set<Class<?>> NON_NULLABLE_ANNOTATIONS = findClasses("reactor.util.lang.NonNullApi",
 			NonNullApi.class.getName());
 
-	private static final Set<String> WHEN_NULLABLE = new HashSet<>(Arrays.asList("UNKNOWN", "MAYBE", "NEVER"));
-	private static final Set<String> WHEN_NON_NULLABLE = new HashSet<>(Collections.singletonList("ALWAYS"));
+	private static final Set<String> WHEN_NULLABLE = Set.of("UNKNOWN", "MAYBE", "NEVER");
+	private static final Set<String> WHEN_NON_NULLABLE = Set.of("ALWAYS");
 
 	private NullableUtils() {}
 
@@ -250,26 +253,28 @@ public abstract class NullableUtils {
 
 		if (annotation.annotationType().getName().equals(metaAnnotationName)) {
 
-			Map<String, Object> attributes = AnnotationUtils.getAnnotationAttributes(annotation);
-
+			Map<String, @Nullable Object> attributes = AnnotationUtils.getAnnotationAttributes(annotation);
 			return !attributes.isEmpty() && filter.test((T) attributes.get(attribute));
 		}
 
-		MultiValueMap<String, Object> attributes = AnnotatedElementUtils
+		MultiValueMap<String, @Nullable Object> attributes = AnnotatedElementUtils
 				.getAllAnnotationAttributes(annotation.annotationType(), metaAnnotationName);
 
-		if (attributes == null || attributes.isEmpty()) {
+		if (CollectionUtils.isEmpty(attributes)) {
 			return false;
 		}
 
-		List<Object> elementTypes = attributes.get(attribute);
+		List<@Nullable Object> elementTypes = attributes.get(attribute);
 
-		for (Object value : elementTypes) {
+		if (elementTypes != null) {
+			for (Object value : elementTypes) {
 
-			if (filter.test((T) value)) {
-				return true;
+				if (filter.test((T) value)) {
+					return true;
+				}
 			}
 		}
+
 		return false;
 	}
 

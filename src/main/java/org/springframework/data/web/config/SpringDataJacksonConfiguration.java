@@ -15,10 +15,14 @@
  */
 package org.springframework.data.web.config;
 
+
+import java.io.Serial;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.Page;
@@ -26,7 +30,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.geo.GeoModule;
 import org.springframework.data.web.PagedModel;
 import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 
 import com.fasterxml.jackson.databind.BeanDescription;
@@ -42,10 +45,15 @@ import com.fasterxml.jackson.databind.util.StdConverter;
  * JavaConfig class to export Jackson specific configuration.
  *
  * @author Oliver Gierke
+ * @author Mark Paluch
+ * @deprecated since 4.0, in favor of {@link SpringDataJackson3Configuration} which uses Jackson 3.
  */
+@SuppressWarnings("removal")
+@Deprecated(since = "4.0", forRemoval = true)
 public class SpringDataJacksonConfiguration implements SpringDataJacksonModules {
 
-	@Nullable @Autowired(required = false) SpringDataWebSettings settings;
+	@Nullable
+	@Autowired(required = false) SpringDataWebSettings settings;
 
 	@Bean
 	public GeoModule jacksonGeoModule() {
@@ -59,18 +67,16 @@ public class SpringDataJacksonConfiguration implements SpringDataJacksonModules 
 
 	/**
 	 * A Jackson module customizing the serialization of {@link PageImpl} instances depending on the
-	 * {@link SpringDataWebSettings} handed into the instance. In case of
-	 * {@link org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode#DIRECT} being
+	 * {@link SpringDataWebSettings} handed into the instance. In case of {@link PageSerializationMode#DIRECT} being
 	 * configured, a no-op {@link StdConverter} is registered to issue a one-time warning about the mode being used (as
-	 * it's not recommended).
-	 * {@link org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode#VIA_DTO} would register
-	 * a converter wrapping {@link PageImpl} instances into {@link PagedModel}.
+	 * it's not recommended). {@link PageSerializationMode#VIA_DTO} would register a converter wrapping {@link PageImpl}
+	 * instances into {@link PagedModel}.
 	 *
 	 * @author Oliver Drotbohm
 	 */
 	public static class PageModule extends SimpleModule {
 
-		private static final long serialVersionUID = 275254460581626332L;
+		private static final @Serial long serialVersionUID = 275254460581626332L;
 
 		private static final String UNPAGED_TYPE_NAME = "org.springframework.data.domain.Unpaged";
 		private static final Class<?> UNPAGED_TYPE;
@@ -97,14 +103,14 @@ public class SpringDataJacksonConfiguration implements SpringDataJacksonModules 
 		}
 
 		/**
-		 * A Jackson serializer rendering instances of {@link org.springframework.data.domain.Unpaged} as {@code INSTANCE}
+		 * A Jackson serializer rendering instances of {@code org.springframework.data.domain.Unpaged} as {@code INSTANCE}
 		 * as it was previous rendered.
 		 *
 		 * @author Oliver Drotbohm
 		 */
 		static class UnpagedAsInstanceSerializer extends ToStringSerializerBase {
 
-			private static final long serialVersionUID = -1213451755610144637L;
+			private static final @Serial long serialVersionUID = -1213451755610144637L;
 
 			public UnpagedAsInstanceSerializer() {
 				super(Object.class);
@@ -117,13 +123,12 @@ public class SpringDataJacksonConfiguration implements SpringDataJacksonModules 
 		}
 
 		@JsonSerialize(converter = PageModelConverter.class)
-		abstract class WrappingMixing {}
+		abstract static class WrappingMixing {}
 
 		static class PageModelConverter extends StdConverter<Page<?>, PagedModel<?>> {
 
-			@Nullable
 			@Override
-			public PagedModel<?> convert(@Nullable Page<?> value) {
+			public @Nullable PagedModel<?> convert(@Nullable Page<?> value) {
 				return value == null ? null : new PagedModel<>(value);
 			}
 		}
@@ -142,7 +147,7 @@ public class SpringDataJacksonConfiguration implements SpringDataJacksonModules 
 						or Spring HATEOAS and Spring Data's PagedResourcesAssembler as documented in https://docs.spring.io/spring-data/commons/reference/repositories/core-extensions.html#core.web.pageables.
 					""";
 
-			private static final long serialVersionUID = 954857444010009875L;
+			private static final @Serial long serialVersionUID = 954857444010009875L;
 
 			private boolean warningRendered = false;
 
@@ -160,4 +165,5 @@ public class SpringDataJacksonConfiguration implements SpringDataJacksonModules 
 			}
 		}
 	}
+
 }

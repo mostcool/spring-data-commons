@@ -17,6 +17,9 @@ package org.springframework.data.repository.config;
 
 import java.util.Optional;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.TypeFilter;
@@ -24,7 +27,6 @@ import org.springframework.data.config.ConfigurationUtils;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.data.util.Lazy;
 import org.springframework.data.util.Streamable;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
@@ -101,9 +103,8 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 		return beanName.get() + configurationSource.getRepositoryImplementationPostfix().orElse("Impl");
 	}
 
-	@Nullable
 	@Override
-	public Object getSource() {
+	public @Nullable Object getSource() {
 		return configurationSource.getSource();
 	}
 
@@ -118,8 +119,12 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 	}
 
 	@Override
-	public String getRepositoryFactoryBeanClassName() {
+	public Optional<String> getRepositoryFragmentsContributorClassName() {
+		return configurationSource.getRepositoryFragmentsContributorClassName();
+	}
 
+	@Override
+	public String getRepositoryFactoryBeanClassName() {
 		return configurationSource.getRepositoryFactoryBeanClassName()
 				.orElseGet(extension::getRepositoryFactoryBeanClassName);
 	}
@@ -161,8 +166,7 @@ public class DefaultRepositoryConfiguration<T extends RepositoryConfigurationSou
 	}
 
 	@Override
-	@org.springframework.lang.NonNull
-	public String getResourceDescription() {
+	public @NonNull String getResourceDescription() {
 		return String.format("%s defined in %s", getRepositoryInterface(), configurationSource.getResourceDescription());
 	}
 }

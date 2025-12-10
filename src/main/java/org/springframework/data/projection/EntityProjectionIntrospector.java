@@ -22,18 +22,19 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.data.core.PropertyPath;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.projection.EntityProjection.ProjectionType;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
- * This class is introspects the returned type in the context of a domain type for all reachable properties (w/o cycles)
- * to determine which property paths are subject to projection.
+ * This class introspects the returned type in the context of a domain type for all reachable properties (w/o cycles) to
+ * determine which property paths are subject to projection.
  *
  * @author Gerrit Meier
  * @author Mark Paluch

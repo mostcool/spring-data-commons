@@ -20,12 +20,9 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import org.springframework.data.annotation.PersistenceConstructor
-import org.springframework.data.annotation.Persistent
+import org.springframework.data.annotation.PersistenceCreator
 import org.springframework.data.mapping.PersistentEntity
 import org.springframework.data.mapping.context.SamplePersistentProperty
-import org.springframework.data.mapping.model.KotlinValueUtils.BoxingRules
-import kotlin.jvm.internal.Reflection
 import kotlin.reflect.KClass
 
 /**
@@ -33,6 +30,7 @@ import kotlin.reflect.KClass
  *
  * @author Mark Paluch
  * @author Sebastien Deleuze
+ * @author Edward Poot
  */
 @Suppress("UNCHECKED_CAST")
 class KotlinClassGeneratingEntityInstantiatorUnitTests {
@@ -192,6 +190,33 @@ class KotlinClassGeneratingEntityInstantiatorUnitTests {
 		assertThat(instance.id.id).isEqualTo("hello")
 	}
 
+	@Test // GH-3389
+	fun `should use private default constructor for types using value class`() {
+
+		every { provider.getParameterValue<String>(any()) } returns "hello"
+		val instance = construct(WithMyValueClassPrivateConstructor::class)
+
+		assertThat(instance.id.id).isEqualTo("hello")
+	}
+
+	@Test // GH-3389
+	fun `should use private default constructor for types using nullable value class`() {
+
+		every { provider.getParameterValue<String>(any()) } returns "hello"
+		val instance = construct(WithNullableMyValueClassPrivateConstructor::class)
+
+		assertThat(instance.id?.id).isEqualTo("hello")
+	}
+
+	@Test // GH-3389
+	fun `should use private default constructor for types using value class with default value`() {
+
+		every { provider.getParameterValue<String>(any()) } returns "hello"
+		val instance = construct(WithMyValueClassPrivateConstructorAndDefaultValue::class)
+
+		assertThat(instance.id.id).isEqualTo("hello")
+	}
+
 	@Test
 	fun `should use default constructor for types using nullable value class`() {
 
@@ -297,13 +322,16 @@ class KotlinClassGeneratingEntityInstantiatorUnitTests {
 	)
 
 
-	data class WithConstructorsHavingSameParameterCount @PersistenceConstructor constructor(val id: Long?, val notes: Map<String, String> = emptyMap()) {
+	data class WithConstructorsHavingSameParameterCount @PersistenceCreator constructor(
+		val id: Long?,
+		val notes: Map<String, String> = emptyMap()
+	) {
 		constructor(notes: Map<String, String>, additionalNotes: Map<String, String> = emptyMap()) : this(null, notes + additionalNotes)
 	}
 
 	data class ContactWithPersistenceConstructor(val firstname: String, val lastname: String) {
 
-		@PersistenceConstructor
+		@PersistenceCreator
 		constructor(firstname: String) : this(firstname, "")
 	}
 
@@ -312,7 +340,7 @@ class KotlinClassGeneratingEntityInstantiatorUnitTests {
 
 		var organisations: MutableList<Organisation> = mutableListOf()
 	) {
-		@PersistenceConstructor
+		@PersistenceCreator
 		constructor(id: String?) : this(id, mutableListOf())
 	}
 

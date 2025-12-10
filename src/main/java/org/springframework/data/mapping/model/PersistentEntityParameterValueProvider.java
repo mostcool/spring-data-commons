@@ -15,18 +15,17 @@
  */
 package org.springframework.data.mapping.model;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link ParameterValueProvider} based on a {@link PersistentEntity} to use a {@link PropertyValueProvider} to lookup
- * the value of the property referenced by the given {@link Parameter}. Additionally a
- * {@link DefaultSpELExpressionEvaluator} can be configured to get property value resolution trumped by a SpEL
- * expression evaluation.
+ * the value of the property referenced by the given {@link Parameter}.
  *
  * @author Oliver Gierke
  * @author Johannes Englmeier
@@ -39,7 +38,7 @@ public class PersistentEntityParameterValueProvider<P extends PersistentProperty
 	private final @Nullable Object parent;
 
 	public PersistentEntityParameterValueProvider(PersistentEntity<?, P> entity, PropertyValueProvider<P> provider,
-			Object parent) {
+			@Nullable Object parent) {
 		this.entity = entity;
 		this.provider = provider;
 		this.parent = parent;

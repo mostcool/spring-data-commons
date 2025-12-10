@@ -18,10 +18,11 @@ package org.springframework.data.repository.query;
 import java.lang.reflect.Method;
 import java.util.Locale;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.repository.core.NamedQueries;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -31,18 +32,20 @@ import org.springframework.util.StringUtils;
  */
 public interface QueryLookupStrategy {
 
-	public static enum Key {
+	/**
+	 * Enumeration of available query lookup strategies.
+	 */
+	enum Key {
 
 		CREATE, USE_DECLARED_QUERY, CREATE_IF_NOT_FOUND;
 
 		/**
 		 * Returns a strategy key from the given XML value.
 		 *
-		 * @param xml
+		 * @param xml value represented as XML value.
 		 * @return a strategy key from the given XML value
 		 */
-		@Nullable
-		public static Key create(String xml) {
+		public static @Nullable Key create(String xml) {
 
 			if (!StringUtils.hasText(xml)) {
 				return null;

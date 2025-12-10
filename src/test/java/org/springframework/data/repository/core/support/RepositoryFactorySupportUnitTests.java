@@ -32,6 +32,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.aopalliance.intercept.MethodInvocation;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -67,18 +69,16 @@ import org.springframework.data.repository.core.support.RepositoryMethodInvocati
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.data.repository.query.QueryCreationException;
 import org.springframework.data.repository.query.QueryLookupStrategy;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 import org.springframework.data.repository.query.parser.PartTree;
 import org.springframework.data.repository.sample.User;
-import org.springframework.lang.Nullable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncAnnotationBeanPostProcessor;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.interceptor.TransactionalProxy;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.concurrent.ListenableFuture;
 
 /**
  * Unit tests for {@link RepositoryFactorySupport}.
@@ -122,7 +122,7 @@ class RepositoryFactorySupportUnitTests {
 		factory.getRepository(ObjectRepository.class);
 
 		verify(listener, times(1)).onCreation(any(MyRepositoryQuery.class));
-		verify(otherListener, times(3)).onCreation(any(RepositoryQuery.class));
+		verify(otherListener, times(4)).onCreation(any(RepositoryQuery.class));
 	}
 
 	@Test // DATACMNS-1538
@@ -254,7 +254,8 @@ class RepositoryFactorySupportUnitTests {
 	@Test // GH-3090
 	void capturesRepositoryMetadata() {
 
-		record Metadata(RepositoryMethodContext context, MethodInvocation methodInvocation) {}
+		record Metadata(RepositoryMethodContext context, MethodInvocation methodInvocation) {
+		}
 
 		when(factory.queryOne.execute(any(Object[].class)))
 				.then(invocation -> new Metadata(RepositoryMethodContextHolder.getContext(),
@@ -299,7 +300,7 @@ class RepositoryFactorySupportUnitTests {
 
 		var repository1 = factory.getRepository(ObjectAndQuerydslRepository.class, backingRepo);
 		var repository2 = factory.getRepository(ObjectAndQuerydslRepository.class, backingRepo);
-		repository1.findByFoo();
+		repository1.findByFoo(null);
 		repository2.deleteAll();
 
 		for (int i = 0; i < 10; i++) {
@@ -368,14 +369,6 @@ class RepositoryFactorySupportUnitTests {
 	}
 
 	@Test // DATACMNS-714
-	void wrapsExecutionResultIntoListenableFutureIfConfigured() throws Exception {
-
-		var reference = new User();
-
-		expect(prepareConvertingRepository(reference).findOneByLastname("Foo"), reference);
-	}
-
-	@Test // DATACMNS-714
 	void wrapsExecutionResultIntoCompletableFutureWithEntityCollectionIfConfigured() throws Exception {
 
 		var reference = singletonList(new User());
@@ -437,6 +430,20 @@ class RepositoryFactorySupportUnitTests {
 
 		assertThatThrownBy( //
 				() -> repository.findByClass(null)) //
+				.isInstanceOf(IllegalArgumentException.class) //
+				.hasMessageContaining("must not be null");
+
+	}
+
+	@Test // GH-3100
+	void considersRequiredParameterThroughJspecify() {
+
+		var repository = factory.getRepository(ObjectRepository.class);
+
+		assertThatNoException().isThrownBy(() -> repository.findByFoo(null));
+
+		assertThatThrownBy( //
+				() -> repository.findByNonNullFoo(null)) //
 				.isInstanceOf(IllegalArgumentException.class) //
 				.hasMessageContaining("must not be null");
 	}
@@ -523,7 +530,7 @@ class RepositoryFactorySupportUnitTests {
 		var factory = new DummyRepositoryFactory(backingRepo) {
 			@Override
 			protected Optional<QueryLookupStrategy> getQueryLookupStrategy(QueryLookupStrategy.Key key,
-					QueryMethodEvaluationContextProvider evaluationContextProvider) {
+					ValueExpressionDelegate valueExpressionDelegate) {
 				return Optional.of((method, metadata, factory, namedQueries) -> {
 					new PartTree(method.getName(), method.getReturnType());
 					return null;
@@ -532,7 +539,7 @@ class RepositoryFactorySupportUnitTests {
 		};
 
 		assertThatThrownBy(() -> factory.getRepository(WithQueryMethodUsingInvalidProperty.class))
-				.isInstanceOf(QueryCreationException.class).hasMessageContaining("findAllByName")
+				.isInstanceOf(QueryCreationException.class)
 				.hasMessageContaining("No property 'name' found for type 'Object'");
 	}
 
@@ -574,8 +581,10 @@ class RepositoryFactorySupportUnitTests {
 		@Nullable
 		Object findByClass(Class<?> clazz);
 
-		@Nullable
-		Object findByFoo();
+		@org.jspecify.annotations.Nullable
+		Object findByFoo(@org.jspecify.annotations.Nullable Object foo);
+
+		Object findByNonNullFoo(@NonNull Object foo);
 
 		@Nullable
 		Object save(Object entity);
@@ -631,7 +640,6 @@ class RepositoryFactorySupportUnitTests {
 
 	}
 
-	@SuppressWarnings("removal")
 	interface ConvertingRepository extends Repository<Object, Long> {
 
 		Set<String> convertListToStringSet();
@@ -653,11 +661,7 @@ class RepositoryFactorySupportUnitTests {
 
 		// DATACMNS-714
 		@Async
-		ListenableFuture<User> findOneByLastname(String lastname);
-
-		// DATACMNS-714
-		@Async
-		ListenableFuture<List<User>> readAllByLastname(String lastname);
+		CompletableFuture<List<User>> readAllByLastname(String lastname);
 	}
 
 	static class CustomRepositoryBaseClass {

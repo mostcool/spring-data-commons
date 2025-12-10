@@ -22,13 +22,13 @@ import java.util.Collection;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.repository.util.ClassUtils;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link DefaultRepositoryMetadata}.
@@ -142,12 +142,6 @@ class DefaultRepositoryMetadataUnitTests {
 	}
 
 	/**
-	 * Sample interface to serve two purposes:
-	 * <ol>
-	 * <li>Check that {@link ClassUtils#getDomainClass(Class)} skips non {@link GenericDao} interfaces</li>
-	 * <li>Check that {@link ClassUtils#getDomainClass(Class)} traverses interface hierarchy</li>
-	 * </ol>
-	 *
 	 * @author Oliver Gierke
 	 */
 	private interface SomeDao extends Serializable, UserRepository {

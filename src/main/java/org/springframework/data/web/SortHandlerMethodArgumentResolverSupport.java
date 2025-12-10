@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
@@ -30,7 +31,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.web.SortDefault.SortDefaults;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -125,7 +125,7 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 	protected Sort getDefaultFromAnnotationOrFallback(MethodParameter parameter) {
 
 		MergedAnnotations mergedAnnotations = MergedAnnotations.from(parameter, parameter.getParameterAnnotations(),
-				RepeatableContainers.of(SortDefault.class, SortDefaults.class));
+				RepeatableContainers.explicitRepeatable(SortDefault.class, SortDefaults.class));
 
 		List<MergedAnnotation<SortDefault>> annotations = mergedAnnotations.stream(SortDefault.class).toList();
 

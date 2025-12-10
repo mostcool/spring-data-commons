@@ -18,8 +18,9 @@ package org.springframework.data.web;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.domain.Page;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -56,7 +57,6 @@ public class PagedModel<T> {
 		return page.getContent();
 	}
 
-	@Nullable
 	@JsonProperty("page")
 	public PageMetadata getMetadata() {
 		return new PageMetadata(page.getSize(), page.getNumber(), page.getTotalElements(),
@@ -82,7 +82,7 @@ public class PagedModel<T> {
 		return Objects.hash(page);
 	}
 
-	public static record PageMetadata(long size, long number, long totalElements, long totalPages) {
+	public record PageMetadata(long size, long number, long totalElements, long totalPages) {
 
 		public PageMetadata {
 			Assert.isTrue(size > -1, "Size must not be negative!");

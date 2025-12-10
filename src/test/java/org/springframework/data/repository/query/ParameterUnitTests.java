@@ -28,8 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import org.springframework.core.MethodParameter;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.repository.query.ParametersUnitTests.User;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link Parameter}.
@@ -42,7 +42,7 @@ class ParameterUnitTests {
 	@Test // DATAJPA-1185
 	void classParameterWithSameTypeParameterAsReturnedListIsDynamicProjectionParameter() throws Exception {
 
-		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithList"));
+		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithList"), TypeInformation.MAP);
 
 		assertThat(parameter.isDynamicProjectionParameter()).isTrue();
 	}
@@ -50,7 +50,7 @@ class ParameterUnitTests {
 	@Test // DATAJPA-1185
 	void classParameterWithSameTypeParameterAsReturnedStreamIsDynamicProjectionParameter() throws Exception {
 
-		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithStream"));
+		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithStream"), TypeInformation.MAP);
 
 		assertThat(parameter.isDynamicProjectionParameter()).isTrue();
 	}
@@ -58,7 +58,7 @@ class ParameterUnitTests {
 	@Test
 	void classParameterWithSameTypeParameterAsReturnedOptionalIsDynamicProjectionParameter() throws Exception {
 
-		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithOptional"));
+		var parameter = new Parameter(getMethodParameter("dynamicProjectionWithOptional"), TypeInformation.MAP);
 
 		assertThat(parameter.isDynamicProjectionParameter()).isTrue();
 	}
@@ -80,7 +80,7 @@ class ParameterUnitTests {
 	@Test // #2770
 	void doesNotConsiderAtParamAnnotatedClassParameterDynamicProjectionOne() throws Exception {
 
-		var parameter = new Parameter(getMethodParameter("atParamOnClass"));
+		var parameter = new Parameter(getMethodParameter("atParamOnClass"), TypeInformation.OBJECT);
 
 		assertThat(parameter.isDynamicProjectionParameter()).isFalse();
 	}

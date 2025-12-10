@@ -27,21 +27,23 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.asm.ClassWriter;
 import org.springframework.asm.MethodVisitor;
 import org.springframework.asm.Opcodes;
 import org.springframework.asm.Type;
 import org.springframework.beans.BeanInstantiationException;
+import org.springframework.beans.BeanUtils;
 import org.springframework.cglib.core.ReflectUtils;
 import org.springframework.core.NativeDetector;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.FactoryMethod;
 import org.springframework.data.mapping.InstanceCreatorMetadata;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PersistentProperty;
 import org.springframework.data.mapping.PreferredConstructor;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -49,7 +51,7 @@ import org.springframework.util.ClassUtils;
  * An {@link EntityInstantiator} that can generate byte code to speed-up dynamic object instantiation. Uses the
  * {@link PersistentEntity}'s {@link PreferredConstructor} to instantiate an instance of the entity by dynamically
  * generating factory methods with appropriate constructor invocations via ASM. If we cannot generate byte code for a
- * type, we gracefully fallback to the {@link ReflectionEntityInstantiator}.
+ * type, we gracefully fall back to the {@link ReflectionEntityInstantiator}.
  *
  * @author Thomas Darimont
  * @author Oliver Gierke
@@ -58,7 +60,7 @@ import org.springframework.util.ClassUtils;
  * @author Mark Paluch
  * @since 1.11
  */
-class ClassGeneratingEntityInstantiator implements EntityInstantiator {
+class ClassGeneratingEntityInstantiator implements EntityInstantiator, EntityInstantiatorSource {
 
 	private static final Log LOGGER = LogFactory.getLog(ClassGeneratingEntityInstantiator.class);
 
@@ -89,13 +91,25 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 	public <T, E extends PersistentEntity<? extends T, P>, P extends PersistentProperty<P>> T createInstance(E entity,
 			ParameterValueProvider<P> provider) {
 
+		EntityInstantiator instantiator = getEntityInstantiator(entity);
+		return instantiator.createInstance(entity, provider);
+	}
+
+	@Override
+	public EntityInstantiator getInstantiatorFor(PersistentEntity<?, ?> entity) {
+		return getEntityInstantiator(entity);
+	}
+
+	private <T, E extends PersistentEntity<? extends T, P>, P extends PersistentProperty<P>> EntityInstantiator getEntityInstantiator(
+			E entity) {
+
 		EntityInstantiator instantiator = this.entityInstantiators.get(entity.getTypeInformation());
 
 		if (instantiator == null) {
 			instantiator = potentiallyCreateAndRegisterEntityInstantiator(entity);
 		}
 
-		return instantiator.createInstance(entity, provider);
+		return instantiator;
 	}
 
 	/**
@@ -159,8 +173,7 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 	 * @return
 	 */
 	protected EntityInstantiator doCreateEntityInstantiator(PersistentEntity<?, ?> entity) {
-		return new EntityInstantiatorAdapter(
-				createObjectInstantiator(entity, entity.getInstanceCreatorMetadata()));
+		return new EntityInstantiatorAdapter(createObjectInstantiator(entity, entity.getInstanceCreatorMetadata()));
 	}
 
 	/**
@@ -169,10 +182,19 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 	 */
 	boolean shouldUseReflectionEntityInstantiator(PersistentEntity<?, ?> entity) {
 
+		String accessorClassName = ObjectInstantiatorClassGenerator.generateClassName(entity);
+
+		// already present in classloader
+		if (ClassUtils.isPresent(accessorClassName, entity.getType().getClassLoader())) {
+			return false;
+		}
+
 		if (NativeDetector.inNativeImage()) {
 
 			if (LOGGER.isDebugEnabled()) {
-				LOGGER.debug(String.format("graalvm.nativeimage - fall back to reflection for %s", entity.getName()));
+				LOGGER.debug(String.format(
+						"[org.graalvm.nativeimage.imagecode=true] and no AOT-generated EntityInstantiator for %s. Falling back to reflection.",
+						entity.getName()));
 			}
 
 			return true;
@@ -239,7 +261,8 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 			@Nullable InstanceCreatorMetadata<?> constructor) {
 
 		try {
-			return (ObjectInstantiator) this.generator.generateCustomInstantiatorClass(entity, constructor).newInstance();
+			Class<?> instantiatorClass = this.generator.generateCustomInstantiatorClass(entity, constructor);
+			return (ObjectInstantiator) BeanUtils.instantiateClass(instantiatorClass);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
@@ -386,7 +409,7 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 	static class ObjectInstantiatorClassGenerator {
 
 		private static final String INIT = "<init>";
-		private static final String TAG = "_Instantiator_";
+		private static final String TAG = "__Instantiator_";
 		private static final String JAVA_LANG_OBJECT = Type.getInternalName(Object.class);
 		private static final String CREATE_METHOD_NAME = "newInstance";
 
@@ -429,8 +452,8 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 		 * @param entity
 		 * @return
 		 */
-		private String generateClassName(PersistentEntity<?, ?> entity) {
-			return entity.getType().getName() + TAG + Integer.toString(entity.hashCode(), 36);
+		static String generateClassName(PersistentEntity<?, ?> entity) {
+			return entity.getType().getName() + TAG + Integer.toString(Math.abs(entity.getType().getName().hashCode()), 36);
 		}
 
 		/**
@@ -446,7 +469,7 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 
 			ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
-			cw.visit(Opcodes.V1_6, ACC_PUBLIC + ACC_SUPER, internalClassName.replace('.', '/'), null, JAVA_LANG_OBJECT,
+			cw.visit(Opcodes.V1_8, ACC_PUBLIC + ACC_SUPER, internalClassName.replace('.', '/'), null, JAVA_LANG_OBJECT,
 					IMPLEMENTED_INTERFACES);
 
 			visitDefaultConstructor(cw);
@@ -482,8 +505,7 @@ class ClassGeneratingEntityInstantiator implements EntityInstantiator {
 			String entityTypeResourcePath = Type.getInternalName(entity.getType());
 
 			MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_VARARGS, CREATE_METHOD_NAME,
-					"([" + BytecodeUtil.referenceName(Object.class) + ")" + BytecodeUtil.referenceName(Object.class),
-					null, null);
+					"([" + BytecodeUtil.referenceName(Object.class) + ")" + BytecodeUtil.referenceName(Object.class), null, null);
 			mv.visitCode();
 			mv.visitTypeInsn(NEW, entityTypeResourcePath);
 			mv.visitInsn(DUP);

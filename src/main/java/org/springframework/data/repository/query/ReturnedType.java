@@ -17,23 +17,22 @@ package org.springframework.data.repository.query;
 
 import java.beans.PropertyDescriptor;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.PreferredConstructor;
 import org.springframework.data.mapping.model.PreferredConstructorDiscoverer;
 import org.springframework.data.projection.ProjectionFactory;
 import org.springframework.data.projection.ProjectionInformation;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import org.springframework.data.util.Lazy;
+import org.springframework.lang.Contract;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
@@ -56,7 +55,7 @@ public abstract class ReturnedType {
 
 	private final Class<?> domainType;
 
-	private ReturnedType(Class<?> domainType) {
+	protected ReturnedType(Class<?> domainType) {
 		this.domainType = domainType;
 	}
 
@@ -84,7 +83,7 @@ public abstract class ReturnedType {
 	}
 
 	/**
-	 * Returns the entity type.
+	 * Return the entity type.
 	 *
 	 * @return
 	 */
@@ -93,57 +92,58 @@ public abstract class ReturnedType {
 	}
 
 	/**
-	 * Returns whether the given source object is an instance of the returned type.
+	 * Return whether the given source object is an instance of the returned type.
 	 *
 	 * @param source can be {@literal null}.
 	 * @return
 	 */
+	@Contract("null -> false")
 	public final boolean isInstance(@Nullable Object source) {
 		return getReturnedType().isInstance(source);
 	}
 
 	/**
-	 * Returns whether the type is projecting, i.e. not of the domain type.
-	 *
-	 * @return
-	 */
-	public abstract boolean isProjecting();
-
-	/**
-	 * Returns the type of the individual objects to return.
+	 * Return the type of the individual objects to return.
 	 *
 	 * @return
 	 */
 	public abstract Class<?> getReturnedType();
 
 	/**
-	 * Returns whether the returned type will require custom construction.
+	 * Return whether the type is projecting, i.e. not of the domain type.
 	 *
 	 * @return
 	 */
-	public abstract boolean needsCustomConstruction();
+	public abstract boolean isProjecting();
 
 	/**
-	 * Returns the type that the query execution is supposed to pass to the underlying infrastructure. {@literal null} is
-	 * returned to indicate a generic type (a map or tuple-like type) shall be used.
+	 * Return whether the type is an interface-projection.
 	 *
-	 * @return
+	 * @since 4.0.1
 	 */
-	@Nullable
-	public abstract Class<?> getTypeToRead();
+	public boolean isInterfaceProjection() {
+		return isProjecting() && getReturnedType().isInterface();
+	}
 
 	/**
-	 * Returns the properties required to be used to populate the result.
+	 * Return whether the type is a DTO projection.
 	 *
-	 * @return
+	 * @since 4.0.1
+	 */
+	public boolean isDtoProjection() {
+		return isProjecting() && !getReturnedType().isInterface();
+	}
+
+	/**
+	 * Return the properties required to be used to populate the result.
+	 *
 	 * @see ProjectionInformation#getInputProperties()
 	 */
 	public abstract List<String> getInputProperties();
 
 	/**
-	 * Returns whether the returned type has input properties.
+	 * Return whether the returned type has input properties.
 	 *
-	 * @return
 	 * @since 3.3.5
 	 * @see ProjectionInformation#hasInputProperties()
 	 */
@@ -152,15 +152,28 @@ public abstract class ReturnedType {
 	}
 
 	/**
+	 * Return whether the returned type will require custom construction.
+	 */
+	public abstract boolean needsCustomConstruction();
+
+	/**
+	 * Return the type that the query execution is supposed to pass to the underlying infrastructure. {@literal null} is
+	 * returned to indicate a generic type (a map or tuple-like type) shall be used.
+	 */
+	public abstract @Nullable Class<?> getTypeToRead();
+
+	/**
 	 * A {@link ReturnedType} that's backed by an interface.
 	 *
 	 * @author Oliver Gierke
+	 * @author Mark Paluch
 	 * @since 1.12
 	 */
 	private static final class ReturnedInterface extends ReturnedType {
 
 		private final ProjectionInformation information;
 		private final Class<?> domainType;
+		private final boolean isProjecting;
 		private final List<String> inputProperties;
 
 		/**
@@ -177,6 +190,7 @@ public abstract class ReturnedType {
 
 			this.information = information;
 			this.domainType = domainType;
+			this.isProjecting = !information.getType().isAssignableFrom(domainType);
 			this.inputProperties = detectInputProperties(information);
 		}
 
@@ -199,25 +213,35 @@ public abstract class ReturnedType {
 		}
 
 		@Override
-		public boolean needsCustomConstruction() {
-			return isProjecting() && information.isClosed();
-		}
-
-		@Override
 		public boolean isProjecting() {
-			return !information.getType().isAssignableFrom(domainType);
+			return isProjecting;
 		}
 
-		@Nullable
 		@Override
-		public Class<?> getTypeToRead() {
-			return isProjecting() && information.isClosed() ? null : domainType;
+		public boolean isInterfaceProjection() {
+			return isProjecting();
+		}
+
+		@Override
+		public boolean isDtoProjection() {
+			return false;
 		}
 
 		@Override
 		public List<String> getInputProperties() {
 			return inputProperties;
 		}
+
+		@Override
+		public boolean needsCustomConstruction() {
+			return isProjecting() && information.isClosed();
+		}
+
+		@Override
+		public @Nullable Class<?> getTypeToRead() {
+			return isProjecting() && information.isClosed() ? null : domainType;
+		}
+
 	}
 
 	/**
@@ -225,15 +249,17 @@ public abstract class ReturnedType {
 	 *
 	 * @author Oliver Gierke
 	 * @author Mikhail Polivakha
+	 * @author Mark Paluch
 	 * @since 1.12
 	 */
 	private static final class ReturnedClass extends ReturnedType {
 
-		private static final Set<Class<?>> VOID_TYPES = new HashSet<>(Arrays.asList(Void.class, void.class));
+		private static final Set<Class<?>> VOID_TYPES = Set.of(Void.class, void.class);
 
 		private final Class<?> type;
 		private final boolean isDto;
-		private final List<String> inputProperties;
+		private final @Nullable PreferredConstructor<?, ?> constructor;
+		private final Lazy<List<String>> inputProperties;
 
 		/**
 		 * Creates a new {@link ReturnedClass} instance for the given returned type and domain type.
@@ -258,7 +284,13 @@ public abstract class ReturnedType {
 					!VOID_TYPES.contains(type) && //
 					!type.getPackage().getName().startsWith("java.");
 
-			this.inputProperties = detectConstructorParameterNames(returnedType);
+			this.constructor = detectConstructor(type);
+
+			if (this.constructor == null) {
+				this.inputProperties = Lazy.of(Collections.emptyList());
+			} else {
+				this.inputProperties = Lazy.of(this::detectConstructorParameterNames);
+			}
 		}
 
 		@Override
@@ -267,33 +299,53 @@ public abstract class ReturnedType {
 		}
 
 		@Override
-		@NonNull
-		public Class<?> getTypeToRead() {
-			return type;
-		}
-
-		@Override
 		public boolean isProjecting() {
-			return isDto();
+			return isDto;
 		}
 
 		@Override
-		public boolean needsCustomConstruction() {
-			return isDto() && !inputProperties.isEmpty();
+		public boolean isInterfaceProjection() {
+			return false;
+		}
+
+		@Override
+		public boolean isDtoProjection() {
+			return isProjecting();
 		}
 
 		@Override
 		public List<String> getInputProperties() {
-			return inputProperties;
+			return inputProperties.get();
 		}
 
-		private List<String> detectConstructorParameterNames(Class<?> type) {
+		@Override
+		public boolean hasInputProperties() {
+			return this.constructor != null && this.constructor.getParameterCount() > 0 && super.hasInputProperties();
+		}
 
-			if (!isDto()) {
-				return Collections.emptyList();
-			}
+		@Override
+		public boolean needsCustomConstruction() {
+			return isDtoProjection() && hasInputProperties();
+		}
 
-			PreferredConstructor<?, ?> constructor = PreferredConstructorDiscoverer.discover(type);
+		@Override
+		public Class<?> getTypeToRead() {
+			return type;
+		}
+
+		private boolean isDomainSubtype() {
+			return getDomainType().equals(type) && getDomainType().isAssignableFrom(type);
+		}
+
+		private boolean isPrimitiveOrWrapper() {
+			return ClassUtils.isPrimitiveOrWrapper(type);
+		}
+
+		private @Nullable PreferredConstructor<?, ?> detectConstructor(Class<?> type) {
+			return isDtoProjection() ? PreferredConstructorDiscoverer.discover(type) : null;
+		}
+
+		private List<String> detectConstructorParameterNames() {
 
 			if (constructor == null) {
 				return Collections.emptyList();
@@ -312,24 +364,13 @@ public abstract class ReturnedType {
 				if (logger.isWarnEnabled()) {
 					logger.warn(("No constructor parameter names discovered. "
 							+ "Compile the affected code with '-parameters' instead or avoid its introspection: %s")
-							.formatted(type.getName()));
+							.formatted(constructor.getConstructor().getDeclaringClass().getName()));
 				}
 			}
 
 			return Collections.unmodifiableList(properties);
 		}
 
-		private boolean isDto() {
-			return isDto;
-		}
-
-		private boolean isDomainSubtype() {
-			return getDomainType().equals(type) && getDomainType().isAssignableFrom(type);
-		}
-
-		private boolean isPrimitiveOrWrapper() {
-			return ClassUtils.isPrimitiveOrWrapper(type);
-		}
 	}
 
 	private static final class CacheKey {
@@ -385,9 +426,11 @@ public abstract class ReturnedType {
 
 		@Override
 		public int hashCode() {
+
 			int result = ObjectUtils.nullSafeHashCode(returnedType);
 			result = 31 * result + ObjectUtils.nullSafeHashCode(domainType);
 			result = 31 * result + projectionFactoryHashCode;
+
 			return result;
 		}
 
@@ -396,5 +439,7 @@ public abstract class ReturnedType {
 			return "ReturnedType.CacheKey(returnedType=" + this.getReturnedType() + ", domainType=" + this.getDomainType()
 					+ ", projectionFactoryHashCode=" + this.getProjectionFactoryHashCode() + ")";
 		}
+
 	}
+
 }

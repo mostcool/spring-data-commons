@@ -23,8 +23,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.io.Resource;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -39,7 +40,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author Mark Paluch
  * @author Johannes Englmeier
  * @since 1.6
+ * @deprecated since 4.0, in favor of {@link JacksonResourceReader}.
  */
+@Deprecated(since = "4.0", forRemoval = true)
 public class Jackson2ResourceReader implements ResourceReader {
 
 	private static final String DEFAULT_TYPE_KEY = "_class";

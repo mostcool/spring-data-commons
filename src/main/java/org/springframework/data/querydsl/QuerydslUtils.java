@@ -15,7 +15,8 @@
  */
 package org.springframework.data.querydsl;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.util.StringUtils;
 
 import com.querydsl.core.types.Path;
@@ -40,7 +41,7 @@ public abstract class QuerydslUtils {
 	 * @param path can be {@literal null}.
 	 * @return
 	 */
-	public static String toDotPath(Path<?> path) {
+	public static String toDotPath(@Nullable Path<?> path) {
 		return toDotPath(path, "");
 	}
 

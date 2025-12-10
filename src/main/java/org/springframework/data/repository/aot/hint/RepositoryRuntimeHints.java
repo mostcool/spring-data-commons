@@ -18,6 +18,8 @@ package org.springframework.data.repository.aot.hint;
 import java.util.Arrays;
 import java.util.Properties;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.aop.SpringProxy;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aot.hint.MemberCategory;
@@ -27,6 +29,7 @@ import org.springframework.aot.hint.TypeReference;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.core.DecoratingProxy;
 import org.springframework.core.io.InputStreamSource;
+import org.springframework.data.core.ReactiveWrappers;
 import org.springframework.data.domain.Example;
 import org.springframework.data.mapping.context.MappingContext;
 import org.springframework.data.repository.core.RepositoryMetadata;
@@ -39,8 +42,6 @@ import org.springframework.data.repository.query.FluentQuery.FetchableFluentQuer
 import org.springframework.data.repository.query.FluentQuery.ReactiveFluentQuery;
 import org.springframework.data.repository.query.QueryByExampleExecutor;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
-import org.springframework.data.util.ReactiveWrappers;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link RuntimeHintsRegistrar} holding required hints to bootstrap data repositories. <br />
@@ -91,7 +92,7 @@ class RepositoryRuntimeHints implements RuntimeHintsRegistrar {
 
 		//
 		hints.reflection().registerType(Throwable.class,
-				builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.DECLARED_FIELDS));
+				builder -> builder.withMembers(MemberCategory.INVOKE_DECLARED_CONSTRUCTORS, MemberCategory.ACCESS_DECLARED_FIELDS));
 
 		// SpEL support
 		hints.reflection().registerType(

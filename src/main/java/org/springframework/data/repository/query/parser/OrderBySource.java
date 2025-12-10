@@ -16,18 +16,16 @@
 package org.springframework.data.repository.query.parser;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.springframework.data.core.PropertyPath;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.mapping.PropertyPath;
 import org.springframework.util.StringUtils;
 
 /**
@@ -46,7 +44,7 @@ class OrderBySource {
 	private static final String BLOCK_SPLIT = "(?<=Asc|Desc)(?=\\p{Lu})";
 	private static final Pattern DIRECTION_SPLIT = Pattern.compile("(.+?)(Asc|Desc)?$");
 	private static final String INVALID_ORDER_SYNTAX = "Invalid order syntax for part %s";
-	private static final Set<String> DIRECTION_KEYWORDS = new HashSet<>(Arrays.asList("Asc", "Desc"));
+	private static final Set<String> DIRECTION_KEYWORDS = Set.of("Asc", "Desc");
 
 	private final List<Order> orders;
 

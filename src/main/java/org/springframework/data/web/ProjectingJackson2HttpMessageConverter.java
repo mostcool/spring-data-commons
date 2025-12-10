@@ -20,6 +20,8 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.BeanFactory;
@@ -32,7 +34,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,7 +48,9 @@ import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
  * @author Christoph Strobl
  * @soundtrack Richard Spaven - Ice Is Nice (Spaven's 5ive)
  * @since 1.13
+ * @deprecated since 4.0, in favor of {@link ProjectingJacksonHttpMessageConverter}.
  */
+@Deprecated(since = "4.0", forRemoval = true)
 public class ProjectingJackson2HttpMessageConverter extends MappingJackson2HttpMessageConverter
 		implements BeanClassLoaderAware, BeanFactoryAware {
 

@@ -17,13 +17,13 @@ package org.springframework.data.repository.core.support;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.repository.core.CrudMethods;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
-import org.springframework.data.util.Streamable;
-import org.springframework.data.util.TypeInformation;
 
 public final class DummyRepositoryInformation implements RepositoryInformation {
 
@@ -83,8 +83,8 @@ public final class DummyRepositoryInformation implements RepositoryInformation {
 	}
 
 	@Override
-	public Streamable<Method> getQueryMethods() {
-		return Streamable.empty();
+	public List<Method> getQueryMethods() {
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -121,4 +121,10 @@ public final class DummyRepositoryInformation implements RepositoryInformation {
 	public Set<RepositoryFragment<?>> getFragments() {
 		return Collections.emptySet();
 	}
+
+	@Override
+	public RepositoryComposition getRepositoryComposition() {
+		return RepositoryComposition.empty();
+	}
+
 }

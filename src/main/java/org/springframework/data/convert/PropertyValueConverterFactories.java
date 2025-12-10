@@ -23,11 +23,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.data.mapping.PersistentProperty;
-import org.springframework.lang.Nullable;
+import org.springframework.lang.Contract;
 import org.springframework.util.Assert;
 
 /**
@@ -56,10 +58,9 @@ final class PropertyValueConverterFactories {
 			this.delegates = Collections.unmodifiableList(delegates);
 		}
 
-		@Nullable
 		@Override
 		@SuppressWarnings("unchecked")
-		public <A, B, C extends ValueConversionContext<?>> PropertyValueConverter<A, B, C> getConverter(
+		public <A, B, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<A, B, C> getConverter(
 				PersistentProperty<?> property) {
 
 			return delegates.stream().map(it -> (PropertyValueConverter<A, B, C>) it.getConverter(property))
@@ -67,7 +68,7 @@ final class PropertyValueConverterFactories {
 		}
 
 		@Override
-		public <S, T, C extends ValueConversionContext<?>> PropertyValueConverter<S, T, C> getConverter(
+		public <S, T, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<S, T, C> getConverter(
 				Class<? extends PropertyValueConverter<S, T, C>> converterType) {
 
 			return delegates.stream().filter(it -> it.getConverter(converterType) != null).findFirst()
@@ -115,8 +116,7 @@ final class PropertyValueConverterFactories {
 		}
 
 		@Override
-		@SuppressWarnings("unchecked")
-		public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(
+		public <DV, SV, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<DV, SV, C> getConverter(
 				Class<? extends PropertyValueConverter<DV, SV, C>> converterType) {
 
 			Assert.notNull(converterType, "ConverterType must not be null");
@@ -124,8 +124,7 @@ final class PropertyValueConverterFactories {
 			PropertyValueConverter<DV, SV, C> converter = beanFactory.getBeanProvider(converterType).getIfAvailable();
 
 			if (converter == null && beanFactory instanceof AutowireCapableBeanFactory) {
-				return (PropertyValueConverter<DV, SV, C>) ((AutowireCapableBeanFactory) beanFactory).createBean(converterType,
-						AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR, false);
+				return ((AutowireCapableBeanFactory) beanFactory).createBean(converterType);
 			}
 
 			return converter;
@@ -150,10 +149,9 @@ final class PropertyValueConverterFactories {
 			this.converterRegistry = converterRegistry;
 		}
 
-		@Nullable
 		@Override
 		@SuppressWarnings("unchecked")
-		public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(
+		public <DV, SV, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<DV, SV, C> getConverter(
 				PersistentProperty<?> property) {
 
 			return (PropertyValueConverter<DV, SV, C>) converterRegistry.getConverter(property.getOwner().getType(),
@@ -161,7 +159,7 @@ final class PropertyValueConverterFactories {
 		}
 
 		@Override
-		public <S, T, C extends ValueConversionContext<?>> PropertyValueConverter<S, T, C> getConverter(
+		public <S, T, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<S, T, C> getConverter(
 				Class<? extends PropertyValueConverter<S, T, C>> converterType) {
 
 			return null;
@@ -175,6 +173,7 @@ final class PropertyValueConverterFactories {
 	 * @author Christoph Strobl
 	 * @since 2.7
 	 */
+	@SuppressWarnings("OptionalAssignedToNull")
 	static class CachingPropertyValueConverterFactory implements PropertyValueConverterFactory {
 
 		private final PropertyValueConverterFactory delegate;
@@ -187,10 +186,9 @@ final class PropertyValueConverterFactories {
 			this.delegate = delegate;
 		}
 
-		@Nullable
 		@Override
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(
+		public <DV, SV, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<DV, SV, C> getConverter(
 				PersistentProperty<?> property) {
 
 			Optional<PropertyValueConverter<?, ?, ? extends ValueConversionContext<?>>> converter = cache.get(property);
@@ -201,7 +199,7 @@ final class PropertyValueConverterFactories {
 
 		@Override
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		public <DV, SV, C extends ValueConversionContext<?>> PropertyValueConverter<DV, SV, C> getConverter(
+		public <DV, SV, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<DV, SV, C> getConverter(
 				Class<? extends PropertyValueConverter<DV, SV, C>> converterType) {
 
 			Optional<PropertyValueConverter<?, ?, ? extends ValueConversionContext<?>>> converter = cache.get(converterType);
@@ -225,8 +223,9 @@ final class PropertyValueConverterFactories {
 				return typeCache.get(type);
 			}
 
-			<S, T, C extends ValueConversionContext<?>> PropertyValueConverter<S, T, C> cache(PersistentProperty<?> property,
-					@Nullable PropertyValueConverter<S, T, C> converter) {
+			@Contract("_, null -> null;_, !null -> !null")
+			<S, T, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<S, T, C> cache(
+					PersistentProperty<?> property, @Nullable PropertyValueConverter<S, T, C> converter) {
 
 				perPropertyCache.putIfAbsent(property, Optional.ofNullable(converter));
 
@@ -241,7 +240,8 @@ final class PropertyValueConverterFactories {
 				return converter;
 			}
 
-			<S, T, C extends ValueConversionContext<?>> PropertyValueConverter<S, T, C> cache(Class<?> type,
+			@Contract("_, null -> null;_, !null -> !null")
+			<S, T, C extends ValueConversionContext<?>> @Nullable PropertyValueConverter<S, T, C> cache(Class<?> type,
 					@Nullable PropertyValueConverter<S, T, C> converter) {
 
 				typeCache.putIfAbsent(type, Optional.ofNullable(converter));

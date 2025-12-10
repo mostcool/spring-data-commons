@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.core.KotlinDetector;
+import org.springframework.data.core.ReactiveWrappers;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.core.CrudMethods;
@@ -30,8 +32,6 @@ import org.springframework.data.repository.util.QueryExecutionConverters;
 import org.springframework.data.repository.util.ReactiveWrapperConverters;
 import org.springframework.data.util.KotlinReflectionUtils;
 import org.springframework.data.util.Lazy;
-import org.springframework.data.util.ReactiveWrappers;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.Assert;
 
 /**
@@ -100,11 +100,16 @@ public abstract class AbstractRepositoryMetadata implements RepositoryMetadata {
 
 	@Override
 	public Class<?> getReturnedDomainClass(Method method) {
+		return getReturnedDomainTypeInformation(method).getType();
+	}
+
+	@Override
+	public TypeInformation<?> getReturnedDomainTypeInformation(Method method) {
 
 		TypeInformation<?> returnType = getReturnType(method);
 		returnType = ReactiveWrapperConverters.unwrapWrapperTypes(returnType);
 
-		return QueryExecutionConverters.unwrapWrapperTypes(returnType, getDomainTypeInformation()).getType();
+		return QueryExecutionConverters.unwrapWrapperTypes(returnType, getDomainTypeInformation());
 	}
 
 	@Override

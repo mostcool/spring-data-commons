@@ -25,6 +25,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.core.metrics.ApplicationStartup;
 import org.springframework.core.metrics.StartupStep;
 import org.springframework.data.projection.ProjectionFactory;
@@ -36,8 +38,8 @@ import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.core.support.RepositoryComposition.RepositoryFragments;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 
 /**
  * Dummy implementation for {@link RepositoryFactorySupport} that is equipped with mocks to simulate behavior for test
@@ -46,13 +48,15 @@ import org.springframework.data.repository.query.RepositoryQuery;
  * @author Oliver Gierke
  * @author Christoph Strobl
  */
-public class DummyRepositoryFactory extends RepositoryFactorySupport {
+public class DummyRepositoryFactory extends RepositoryFactorySupport implements ApplicationEventPublisherAware {
 
 	public final MyRepositoryQuery queryOne = mock(MyRepositoryQuery.class);
 	public final RepositoryQuery queryTwo = mock(RepositoryQuery.class);
 	public final QueryLookupStrategy strategy = mock(QueryLookupStrategy.class);
 
 	private final ApplicationStartup applicationStartup;
+
+	private ApplicationEventPublisher publisher;
 
 	@SuppressWarnings("unchecked") private final QuerydslPredicateExecutor<Object> querydsl = mock(
 			QuerydslPredicateExecutor.class);
@@ -77,8 +81,7 @@ public class DummyRepositoryFactory extends RepositoryFactorySupport {
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+	public EntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
 		return mock(EntityInformation.class);
 	}
 
@@ -94,8 +97,17 @@ public class DummyRepositoryFactory extends RepositoryFactorySupport {
 
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+			ValueExpressionDelegate valueExpressionDelegate) {
 		return Optional.of(strategy);
+	}
+
+	public ApplicationEventPublisher getPublisher() {
+		return publisher;
+	}
+
+	@Override
+	public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+		this.publisher = publisher;
 	}
 
 	@Override

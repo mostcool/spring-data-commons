@@ -15,23 +15,22 @@
  */
 package org.springframework.data.web;
 
-import static java.lang.annotation.ElementType.*;
-import static java.lang.annotation.RetentionPolicy.*;
-
 import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation to mark projection interfaces that are supposed to be used as projection interface to bind request or
- * response payloads to.
+ * Annotation to mark projection interfaces and handler method projection arguments that are supposed to be used as
+ * projection interface to bind request or response payloads to.
  *
  * @author Oliver Gierke
- * @soundtrack
+ * @author Chris Bono
  * @since 1.13
  */
 @Documented
-@Retention(RUNTIME)
-@Target(TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ ElementType.TYPE, ElementType.PARAMETER })
 public @interface ProjectedPayload {
 }

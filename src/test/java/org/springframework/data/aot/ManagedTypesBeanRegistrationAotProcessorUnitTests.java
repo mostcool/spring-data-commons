@@ -16,7 +16,6 @@
 package org.springframework.data.aot;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
@@ -28,6 +27,7 @@ import java.util.function.Consumer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
 import org.springframework.aot.generate.GenerationContext;
 import org.springframework.aot.hint.predicate.RuntimeHintsPredicates;
 import org.springframework.aot.test.generate.TestGenerationContext;
@@ -41,10 +41,12 @@ import org.springframework.beans.factory.support.RegisteredBean;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.aot.ManagedTypesRegistrationAotContribution.ManagedTypesInstanceCodeFragment;
 import org.springframework.data.domain.ManagedTypes;
 import org.springframework.javapoet.MethodSpec;
 import org.springframework.javapoet.MethodSpec.Builder;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -89,7 +91,7 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 
 		createPostProcessor("commons").processAheadOfTime(RegisteredBean.of(beanFactory, "commons.managed-types"));
 
-		verify(beanFactory, never()).getBean(eq("commons.managed-types"), eq(ManagedTypes.class));
+		verify(beanFactory, never()).getBean("commons.managed-types", ManagedTypes.class);
 	}
 
 	@Test // GH-2593
@@ -126,7 +128,7 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 
 		createPostProcessor("commons").processAheadOfTime(RegisteredBean.of(beanFactory, "commons.managed-types"));
 
-		verify(beanFactory).getBean(eq("commons.managed-types"), eq(ManagedTypes.class));
+		verify(beanFactory).getBean("commons.managed-types", ManagedTypes.class);
 	}
 
 	@Test // GH-2593
@@ -155,8 +157,7 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 	@Test // GH-2593
 	void returnsEmptyContributionWhenBeanCannotBeLoaded() {
 
-		doThrow(new BeanCreationException("o_O")).when(beanFactory).getBean(eq("commons.managed-types"),
-				eq(ManagedTypes.class));
+		doThrow(new BeanCreationException("o_O")).when(beanFactory).getBean("commons.managed-types", ManagedTypes.class);
 
 		beanFactory.registerBeanDefinition("commons.managed-types", myManagedTypesDefinition);
 
@@ -168,7 +169,7 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 		contribution.applyTo(generationContext, null);
 
 		assertThat(generationContext.getRuntimeHints().reflection().typeHints()).isEmpty();
-		verify(beanFactory).getBean(eq("commons.managed-types"), eq(ManagedTypes.class));
+		verify(beanFactory).getBean("commons.managed-types", ManagedTypes.class);
 	}
 
 	@Test // GH-2680
@@ -198,14 +199,14 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 	@Test // GH-2680
 	void generatesInstanceSupplierCodeFragmentToAvoidDuplicateInvocationsForEmptyManagedTypes() {
 
-		beanFactory.registerBeanDefinition("commons.managed-types", BeanDefinitionBuilder.rootBeanDefinition(EmptyManagedTypes.class).getBeanDefinition());
+		beanFactory.registerBeanDefinition("commons.managed-types",
+				BeanDefinitionBuilder.rootBeanDefinition(EmptyManagedTypes.class).getBeanDefinition());
 		RegisteredBean registeredBean = RegisteredBean.of(beanFactory, "commons.managed-types");
 
 		BeanRegistrationAotContribution contribution = createPostProcessor("commons")
 				.processAheadOfTime(RegisteredBean.of(beanFactory, "commons.managed-types"));
 
 		AotTestCodeContributionBuilder.withContextFor(this.getClass()).writeContentFor(contribution).compile(it -> {
-
 
 			InstanceSupplier<ManagedTypes> types = ReflectionTestUtils
 					.invokeMethod(it.getAllCompiledClasses().iterator().next(), "instance");
@@ -264,6 +265,40 @@ class ManagedTypesBeanRegistrationAotProcessorUnitTests {
 				registeredBean, Mockito.mock(BeanRegistrationCodeFragments.class));
 
 		assertThat(fragment.canGenerateCode()).isFalse();
+	}
+
+	@Test // GH-3414
+	void usesConfiguredEnvironment() {
+
+		MockEnvironment env = spy(new MockEnvironment());
+		ManagedTypesBeanRegistrationAotProcessor processor = createPostProcessor("commons");
+		processor.setEnvironment(env);
+
+		beanFactory.registerBeanDefinition("commons.managed-types", managedTypesDefinition);
+
+		BeanRegistrationAotContribution contribution = processor
+				.processAheadOfTime(RegisteredBean.of(beanFactory, "commons.managed-types"));
+
+		contribution.applyTo(new TestGenerationContext(Object.class), null);
+
+		verify(env).getProperty("spring.aot.data.accessors.enabled", Boolean.class, true);
+	}
+
+	@Test // GH-3414
+	void usesUsesEnvironmentFromBeanIfNotSet() {
+
+		MockEnvironment env = spy(new MockEnvironment());
+		ManagedTypesBeanRegistrationAotProcessor processor = createPostProcessor("commons");
+
+		beanFactory.registerBeanDefinition("commons.managed-types", managedTypesDefinition);
+		beanFactory.registerBeanDefinition("environment", new RootBeanDefinition(Environment.class, () -> env));
+
+		BeanRegistrationAotContribution contribution = processor
+				.processAheadOfTime(RegisteredBean.of(beanFactory, "commons.managed-types"));
+
+		contribution.applyTo(new TestGenerationContext(Object.class), null);
+
+		verify(env).getProperty("spring.aot.data.accessors.enabled", Boolean.class, true);
 	}
 
 	private ManagedTypesBeanRegistrationAotProcessor createPostProcessor(String moduleIdentifier) {

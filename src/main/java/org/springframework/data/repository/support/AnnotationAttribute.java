@@ -19,6 +19,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.core.MethodParameter;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.util.Assert;
@@ -96,7 +98,7 @@ class AnnotationAttribute {
 	 * @param annotation must not be {@literal null}.
 	 * @return
 	 */
-	public Object getValueFrom(Annotation annotation) {
+	public @Nullable Object getValueFrom(Annotation annotation) {
 
 		Assert.notNull(annotation, "Annotation must not be null");
 		return attributeName.map(it -> AnnotationUtils.getValue(annotation, it))

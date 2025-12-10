@@ -18,35 +18,44 @@ package org.springframework.data.aot;
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.aot.generate.GenerationContext;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanReference;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.core.ResolvableType;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.EnvironmentCapable;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.data.util.TypeScanner;
-import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * The context in which the AOT processing happens. Grants access to the {@link ConfigurableListableBeanFactory
- * beanFactory} and {@link ClassLoader}. Holds a few convenience methods to check if a type
- * {@link TypeIntrospector#isTypePresent() is present} and allows resolution of them through {@link TypeIntrospector}
- * and {@link IntrospectedBeanDefinition}.
+ * beanFactory} and {@link ClassLoader}.
  * <p>
  * Mainly for internal use within the framework.
  *
  * @author Christoph Strobl
  * @author John Blum
  * @author Mark Paluch
- * @see BeanFactory
  * @since 3.0
+ * @see BeanFactory
  */
-public interface AotContext {
+public interface AotContext extends EnvironmentCapable {
+
+	String GENERATED_REPOSITORIES_ENABLED = "spring.aot.repositories.enabled";
+	String GENERATED_REPOSITORIES_JSON_ENABLED = "spring.aot.repositories.metadata.enabled";
 
 	/**
 	 * Create an {@link AotContext} backed by the given {@link BeanFactory}.
@@ -59,7 +68,67 @@ public interface AotContext {
 
 		Assert.notNull(beanFactory, "BeanFactory must not be null");
 
-		return new DefaultAotContext(beanFactory);
+		return new DefaultAotContext(beanFactory, new StandardEnvironment());
+	}
+
+	/**
+	 * Create an {@link AotContext} backed by the given {@link BeanFactory}.
+	 *
+	 * @param beanFactory reference to the {@link BeanFactory}; must not be {@literal null}.
+	 * @param environment reference to the {@link Environment}; must not be {@literal null}.
+	 * @return a new instance of {@link AotContext}.
+	 * @see BeanFactory
+	 */
+	static AotContext from(BeanFactory beanFactory, Environment environment) {
+
+		Assert.notNull(beanFactory, "BeanFactory must not be null");
+		Assert.notNull(environment, "Environment must not be null");
+
+		return new DefaultAotContext(beanFactory, environment);
+	}
+
+	/**
+	 * Checks if repository code generation is enabled for a given module by checking environment variables for general
+	 * enablement ({@link #GENERATED_REPOSITORIES_ENABLED}) and store-specific ones following the pattern
+	 * {@literal spring.aot.&lt;module-name&gt;.repositories.enabled}.
+	 * <p>
+	 * {@link #GENERATED_REPOSITORIES_ENABLED} acts as a main switch, if disabled, store specific flags have no effect.
+	 * <p>
+	 * Unset properties are considered being {@literal true}.
+	 *
+	 * @param moduleName name of the module. Can be {@literal null} or {@literal empty}, in which case it will only check
+	 *          the general {@link #GENERATED_REPOSITORIES_ENABLED} flag.
+	 * @return indicator if repository code generation is enabled.
+	 * @since 4.0
+	 */
+	default boolean isGeneratedRepositoriesEnabled(@Nullable String moduleName) {
+
+		Environment environment = getEnvironment();
+
+		if (!environment.getProperty(GENERATED_REPOSITORIES_ENABLED, Boolean.class, true)) {
+			return false;
+		}
+
+		if (!StringUtils.hasText(moduleName)) {
+			return true;
+		}
+
+		String modulePropertyName = GENERATED_REPOSITORIES_ENABLED.replace("repositories",
+				"%s.repositories".formatted(moduleName.toLowerCase(Locale.ROOT)));
+		return environment.getProperty(modulePropertyName, Boolean.class, true);
+	}
+
+	/**
+	 * Checks if repository metadata file writing is enabled by checking environment variables for general enablement
+	 * ({@link #GENERATED_REPOSITORIES_JSON_ENABLED})
+	 * <p>
+	 * Unset properties are considered being {@literal true}.
+	 *
+	 * @return indicator if repository metadata should be written
+	 * @since 4.0
+	 */
+	default boolean isGeneratedRepositoriesMetadataEnabled() {
+		return getEnvironment().getProperty(GENERATED_REPOSITORIES_JSON_ENABLED, Boolean.class, true);
 	}
 
 	/**
@@ -108,8 +177,12 @@ public interface AotContext {
 	 *
 	 * @param typeName {@link String name} of the {@link Class type} to evaluate; must not be {@literal null}.
 	 * @return the type introspector for further type-based introspection.
+	 * @deprecated since 4.0 as this isn't widely used and can be easily implemented within user code.
 	 */
-	TypeIntrospector introspectType(String typeName);
+	@Deprecated(since = "4.0", forRemoval = true)
+	default TypeIntrospector introspectType(String typeName) {
+		throw new UnsupportedOperationException(); // preparation for implementation removal.
+	}
 
 	/**
 	 * Returns a new {@link TypeScanner} used to scan for {@link Class types} that will be contributed to the AOT
@@ -132,7 +205,9 @@ public interface AotContext {
 	 * @param packageNames {@link Collection} of {@link String package names} to scan.
 	 * @return a {@link Set} of {@link Class types} found during the scan.
 	 * @see #getTypeScanner()
+	 * @deprecated since 4.0, use {@link #getTypeScanner()} directly
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	default Set<Class<?>> scanPackageForTypes(Collection<Class<? extends Annotation>> identifyingAnnotations,
 			Collection<String> packageNames) {
 
@@ -140,29 +215,68 @@ public interface AotContext {
 	}
 
 	/**
-	 * Returns a {@link IntrospectedBeanDefinition} to obtain further detail about the underlying bean definition. A
+	 * Returns a {@link IntrospectedBeanDefinition} to obtain further detail about the underlying bean definition. An
 	 * introspected bean definition can also point to an absent bean definition.
 	 *
 	 * @param reference {@link BeanReference} to the managed bean.
 	 * @return the introspected bean definition.
+	 * @deprecated since 4.0, use {@link #getBeanFactory()} and interact with the bean factory directly.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	default IntrospectedBeanDefinition introspectBeanDefinition(BeanReference reference) {
 		return introspectBeanDefinition(reference.getBeanName());
 	}
 
 	/**
-	 * Returns a {@link IntrospectedBeanDefinition} to obtain further detail about the underlying bean definition. A
+	 * Returns a {@link IntrospectedBeanDefinition} to obtain further detail about the underlying bean definition. An
 	 * introspected bean definition can also point to an absent bean definition.
 	 *
 	 * @param beanName {@link String} containing the {@literal name} of the bean to evaluate; must not be {@literal null}.
 	 * @return the introspected bean definition.
+	 * @deprecated since 4.0, use {@link #getBeanFactory()} and interact with the bean factory directly.
 	 */
-	IntrospectedBeanDefinition introspectBeanDefinition(String beanName);
+	@Deprecated(since = "4.0", forRemoval = true)
+	default IntrospectedBeanDefinition introspectBeanDefinition(String beanName) {
+		throw new UnsupportedOperationException(); // preparation for implementation removal.
+	}
+
+	/**
+	 * Obtain a {@link AotTypeConfiguration} for the given {@link ResolvableType} to customize the AOT processing for the
+	 * given type. Repeated calls to the same type will result in merging the configuration.
+	 *
+	 * @param resolvableType the resolvable type to configure.
+	 * @param configurationConsumer configuration consumer function.
+	 * @since 4.0
+	 */
+	default void typeConfiguration(ResolvableType resolvableType, Consumer<AotTypeConfiguration> configurationConsumer) {
+		typeConfiguration(resolvableType.toClass(), configurationConsumer);
+	}
+
+	/**
+	 * Obtain a {@link AotTypeConfiguration} for the given {@link ResolvableType} to customize the AOT processing for the
+	 * given type. Repeated calls to the same type will result in merging the configuration.
+	 *
+	 * @param type the type to configure.
+	 * @param configurationConsumer configuration consumer function.
+	 * @since 4.0
+	 */
+	void typeConfiguration(Class<?> type, Consumer<AotTypeConfiguration> configurationConsumer);
+
+	/**
+	 * Contribute type configurations to the given {@link GenerationContext}. This method is called once per
+	 * {@link GenerationContext} after all type configurations have been registered.
+	 *
+	 * @param generationContext the context to contribute the type configurations to.
+	 */
+	void contributeTypeConfigurations(GenerationContext generationContext);
 
 	/**
 	 * Type-based introspector to resolve {@link Class} from a type name and to introspect the bean factory for presence
 	 * of beans.
+	 *
+	 * @deprecated since 4.0 as this isn't widely used and can be easily implemented within user code.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	interface TypeIntrospector {
 
 		/**
@@ -218,12 +332,14 @@ public interface AotContext {
 		 * @return a {@link List} of bean names. The list is empty if the bean factory does not hold any beans of this type.
 		 */
 		List<String> getBeanNames();
-
 	}
 
 	/**
 	 * Interface defining introspection methods for bean definitions.
+	 *
+	 * @deprecated since 4.0 as this isn't widely used and can be easily implemented within user code.
 	 */
+	@Deprecated(since = "4.0", forRemoval = true)
 	interface IntrospectedBeanDefinition {
 
 		/**
@@ -251,7 +367,6 @@ public interface AotContext {
 		 *           bean}.
 		 * @see BeanDefinition
 		 */
-
 		BeanDefinition getBeanDefinition() throws NoSuchBeanDefinitionException;
 
 		/**
@@ -273,7 +388,6 @@ public interface AotContext {
 		 */
 		@Nullable
 		Class<?> resolveType();
-
 	}
 
 }

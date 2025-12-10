@@ -29,11 +29,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.data.annotation.AccessType;
 import org.springframework.data.annotation.AccessType.Type;
@@ -45,6 +47,7 @@ import org.springframework.data.annotation.Persistent;
 import org.springframework.data.annotation.Reference;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.annotation.TypeAlias;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.mapping.Alias;
 import org.springframework.data.mapping.Document;
@@ -56,8 +59,6 @@ import org.springframework.data.mapping.PersistentPropertyAccessor;
 import org.springframework.data.mapping.Person;
 import org.springframework.data.mapping.context.SampleMappingContext;
 import org.springframework.data.mapping.context.SamplePersistentProperty;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.Nullable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**

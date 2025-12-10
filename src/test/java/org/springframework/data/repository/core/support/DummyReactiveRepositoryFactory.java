@@ -29,8 +29,8 @@ import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.RepositoryMetadata;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.RepositoryQuery;
+import org.springframework.data.repository.query.ValueExpressionDelegate;
 
 /**
  * @author Mark Paluch
@@ -54,8 +54,7 @@ public class DummyReactiveRepositoryFactory extends ReactiveRepositoryFactorySup
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
-	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+	public EntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
 		return mock(EntityInformation.class);
 	}
 
@@ -71,7 +70,7 @@ public class DummyReactiveRepositoryFactory extends ReactiveRepositoryFactorySup
 
 	@Override
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(Key key,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
+			ValueExpressionDelegate evaluationContextProvider) {
 		return Optional.of(strategy);
 	}
 

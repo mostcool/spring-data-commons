@@ -31,6 +31,8 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 import org.springframework.beans.BeanUtils;
@@ -62,11 +64,9 @@ import org.springframework.data.repository.core.RepositoryMethodContextHolder;
 import org.springframework.data.repository.core.support.RepositoryComposition.RepositoryFragments;
 import org.springframework.data.repository.core.support.RepositoryInvocationMulticaster.DefaultRepositoryInvocationMulticaster;
 import org.springframework.data.repository.core.support.RepositoryInvocationMulticaster.NoOpRepositoryInvocationMulticaster;
-import org.springframework.data.repository.query.ExtensionAwareQueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.QueryLookupStrategy;
 import org.springframework.data.repository.query.QueryLookupStrategy.Key;
 import org.springframework.data.repository.query.QueryMethod;
-import org.springframework.data.repository.query.QueryMethodEvaluationContextProvider;
 import org.springframework.data.repository.query.QueryMethodValueEvaluationContextAccessor;
 import org.springframework.data.repository.query.RepositoryQuery;
 import org.springframework.data.repository.query.ValueExpressionDelegate;
@@ -77,7 +77,6 @@ import org.springframework.data.util.NullnessMethodInvocationValidator;
 import org.springframework.data.util.ReflectionUtils;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.lang.Nullable;
 import org.springframework.transaction.interceptor.TransactionalProxy;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
@@ -95,7 +94,6 @@ import org.springframework.util.ObjectUtils;
  * @author John Blum
  * @author Johannes Englmeier
  */
-@SuppressWarnings("removal")
 public abstract class RepositoryFactorySupport
 		implements BeanClassLoaderAware, BeanFactoryAware, EnvironmentAware, EnvironmentCapable {
 
@@ -115,19 +113,18 @@ public abstract class RepositoryFactorySupport
 
 	private @Nullable Class<?> repositoryBaseClass;
 	private boolean exposeMetadata;
-	private @Nullable QueryLookupStrategy.Key queryLookupStrategyKey;
+	private QueryLookupStrategy.@Nullable Key queryLookupStrategyKey;
 	private final List<QueryCreationListener<?>> queryPostProcessors;
 	private final List<RepositoryMethodInvocationListener> methodInvocationListeners;
 	private NamedQueries namedQueries;
-	private ClassLoader classLoader;
+	private @Nullable ClassLoader classLoader;
 	private EvaluationContextProvider evaluationContextProvider;
-	private BeanFactory beanFactory;
-	private Environment environment;
+	private @Nullable BeanFactory beanFactory;
+	private @Nullable Environment environment;
 	private Lazy<ProjectionFactory> projectionFactory;
 
 	private final QueryCollectingQueryCreationListener collectingListener = new QueryCollectingQueryCreationListener();
 
-	@SuppressWarnings("null")
 	public RepositoryFactorySupport() {
 
 		this.repositoryInformationCache = new HashMap<>(8);
@@ -142,16 +139,12 @@ public abstract class RepositoryFactorySupport
 		this.projectionFactory = createProjectionFactory();
 	}
 
-	EvaluationContextProvider getEvaluationContextProvider() {
-		return evaluationContextProvider;
-	}
-
 	/**
 	 * Set whether the repository method metadata should be exposed by the repository factory as a ThreadLocal for
 	 * retrieval via the {@code RepositoryMethodContext} class. This is useful if an advised object needs to obtain
 	 * repository information.
 	 * <p>
-	 * Default is {@literal "false"}, in order to avoid unnecessary extra interception. This means that no guarantees are
+	 * Default is {@literal false}, in order to avoid unnecessary extra interception. This means that no guarantees are
 	 * provided that {@code RepositoryMethodContext} access will work consistently within any method of the advised
 	 * object.
 	 * <p>
@@ -171,7 +164,7 @@ public abstract class RepositoryFactorySupport
 	 *
 	 * @param key
 	 */
-	public void setQueryLookupStrategyKey(Key key) {
+	public void setQueryLookupStrategyKey(@Nullable Key key) {
 		this.queryLookupStrategyKey = key;
 	}
 
@@ -212,20 +205,6 @@ public abstract class RepositoryFactorySupport
 	}
 
 	/**
-	 * Sets the {@link QueryMethodEvaluationContextProvider} to be used to evaluate SpEL expressions in manually defined
-	 * queries.
-	 *
-	 * @param evaluationContextProvider can be {@literal null}, defaults to
-	 *          {@link QueryMethodEvaluationContextProvider#DEFAULT}.
-	 * @deprecated since 3.4, use {@link #setEvaluationContextProvider(EvaluationContextProvider)} instead.
-	 */
-	@Deprecated(since = "3.4", forRemoval = true)
-	public void setEvaluationContextProvider(@Nullable QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		setEvaluationContextProvider(evaluationContextProvider == null ? EvaluationContextProvider.DEFAULT
-				: evaluationContextProvider.getEvaluationContextProvider());
-	}
-
-	/**
 	 * Sets the {@link EvaluationContextProvider} to be used to evaluate SpEL expressions in manually defined queries.
 	 *
 	 * @param evaluationContextProvider can be {@literal null}, defaults to {@link EvaluationContextProvider#DEFAULT}.
@@ -236,10 +215,10 @@ public abstract class RepositoryFactorySupport
 	}
 
 	/**
-	 * Configures the repository base class to use when creating the repository proxy. If not set, the factory will use
-	 * the type returned by {@link #getRepositoryBaseClass(RepositoryMetadata)} by default.
+	 * Configures the repository base class to use when creating the repository. If not set, the factory will use the type
+	 * returned by {@link #getRepositoryBaseClass(RepositoryMetadata)} by default.
 	 *
-	 * @param repositoryBaseClass the repository base class to back the repository proxy, can be {@literal null}.
+	 * @param repositoryBaseClass the repository base class to back the repository, can be {@literal null}.
 	 * @since 1.11
 	 */
 	public void setRepositoryBaseClass(@Nullable Class<?> repositoryBaseClass) {
@@ -325,7 +304,7 @@ public abstract class RepositoryFactorySupport
 	 * @return the implemented repository interface.
 	 * @since 2.0
 	 */
-	@SuppressWarnings({ "unchecked", "deprecation" })
+	@SuppressWarnings({ "unchecked", "resource" })
 	public <T> T getRepository(Class<T> repositoryInterface, RepositoryFragments fragments) {
 
 		if (logger.isDebugEnabled()) {
@@ -429,9 +408,9 @@ public abstract class RepositoryFactorySupport
 		}
 
 		Optional<QueryLookupStrategy> queryLookupStrategy = getQueryLookupStrategy(queryLookupStrategyKey,
-				new ValueExpressionDelegate(
-						new QueryMethodValueEvaluationContextAccessor(getEnvironment(), evaluationContextProvider), VALUE_PARSER));
-		result.addAdvice(new QueryExecutorMethodInterceptor(information, getProjectionFactory(), queryLookupStrategy,
+				getValueExpressionDelegate());
+		result.addAdvice(new QueryExecutorMethodInterceptor(information, getProjectionFactory(),
+				queryLookupStrategy.orElse(null),
 				namedQueries, queryPostProcessors, methodInvocationListeners));
 
 		result.addAdvice(
@@ -449,6 +428,11 @@ public abstract class RepositoryFactorySupport
 		return repository;
 	}
 
+	ValueExpressionDelegate getValueExpressionDelegate() {
+		return new ValueExpressionDelegate(
+				new QueryMethodValueEvaluationContextAccessor(getEnvironment(), evaluationContextProvider), VALUE_PARSER);
+	}
+
 	/**
 	 * Returns the {@link ProjectionFactory} to be used with the repository instances created.
 	 *
@@ -456,11 +440,18 @@ public abstract class RepositoryFactorySupport
 	 * @param beanFactory will never be {@literal null}.
 	 * @return will never be {@literal null}.
 	 */
-	protected ProjectionFactory getProjectionFactory(ClassLoader classLoader, BeanFactory beanFactory) {
+	protected ProjectionFactory getProjectionFactory(@Nullable ClassLoader classLoader,
+			@Nullable BeanFactory beanFactory) {
 
 		SpelAwareProxyProjectionFactory factory = new SpelAwareProxyProjectionFactory(EXPRESSION_PARSER);
-		factory.setBeanClassLoader(classLoader);
-		factory.setBeanFactory(beanFactory);
+
+		if (classLoader != null) {
+			factory.setBeanClassLoader(classLoader);
+		}
+
+		if (beanFactory != null) {
+			factory.setBeanFactory(beanFactory);
+		}
 
 		return factory;
 	}
@@ -493,10 +484,6 @@ public abstract class RepositoryFactorySupport
 	 * fragments hash code. In a typical Spring scenario, that shouldn't impose issues as one repository factory produces
 	 * only a single repository instance for one repository interface. Things might be different when using various
 	 * fragments for the same repository interface.
-	 *
-	 * @param metadata
-	 * @param fragments
-	 * @return
 	 */
 	private RepositoryStub getRepositoryStub(RepositoryMetadata metadata, RepositoryFragments fragments) {
 
@@ -508,6 +495,7 @@ public abstract class RepositoryFactorySupport
 
 				RepositoryComposition composition = RepositoryComposition.fromMetadata(metadata);
 				RepositoryFragments repositoryAspects = getRepositoryFragments(metadata);
+
 				composition = composition.append(fragments).append(repositoryAspects);
 
 				Class<?> baseClass = repositoryBaseClass != null ? repositoryBaseClass : getRepositoryBaseClass(metadata);
@@ -538,14 +526,30 @@ public abstract class RepositoryFactorySupport
 	 * @param <ID> the id type
 	 * @param domainClass
 	 * @return
+	 * @deprecated since 4.0, use {@link #getEntityInformation(RepositoryMetadata)} instead.
 	 */
-	public abstract <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass);
+	@Deprecated(since = "4.0")
+	public <T, ID> EntityInformation<T, ID> getEntityInformation(Class<T> domainClass) {
+		throw new UnsupportedOperationException("getEntityInformation is not implemented");
+	}
 
 	/**
-	 * Create a repository instance as backing for the query proxy.
+	 * Returns the {@link EntityInformation} for the given {@link RepositoryMetadata}.
 	 *
-	 * @param metadata
-	 * @return
+	 * @param metadata must not be {@literal null}.
+	 * @return the {@link EntityInformation} to be used for {@link RepositoryMetadata}.
+	 * @since 4.0
+	 */
+	public EntityInformation<?, ?> getEntityInformation(RepositoryMetadata metadata) {
+		return getEntityInformation(metadata.getDomainType());
+	}
+
+	/**
+	 * Create a instance of the repository base class providing store-specific built-in repository functionality of a
+	 * typical {@code CrudRepository}.
+	 *
+	 * @param metadata repository metadata.
+	 * @return object implementing the repository base functionality.
 	 */
 	protected abstract Object getTargetRepository(RepositoryInformation metadata);
 
@@ -553,34 +557,13 @@ public abstract class RepositoryFactorySupport
 	 * Returns the base class backing the actual repository instance. Make sure
 	 * {@link #getTargetRepository(RepositoryInformation)} returns an instance of this class.
 	 *
-	 * @param metadata
-	 * @return
+	 * @param metadata repository metadata.
+	 * @return the repository base class.
 	 */
 	protected abstract Class<?> getRepositoryBaseClass(RepositoryMetadata metadata);
 
 	/**
-	 * Returns the {@link QueryLookupStrategy} for the given {@link Key} and {@link QueryMethodEvaluationContextProvider}.
-	 *
-	 * @param key can be {@literal null}.
-	 * @param evaluationContextProvider will never be {@literal null}.
-	 * @return the {@link QueryLookupStrategy} to use or {@literal null} if no queries should be looked up.
-	 * @since 1.9
-	 * @deprecated since 3.4, use {@link #getQueryLookupStrategy(Key, ValueExpressionDelegate)} instead to support
-	 *             {@link org.springframework.data.expression.ValueExpression} in query methods.
-	 */
-	@Deprecated(since = "3.4", forRemoval = true)
-	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
-			QueryMethodEvaluationContextProvider evaluationContextProvider) {
-		return Optional.empty();
-	}
-
-	/**
-	 * Returns the {@link QueryLookupStrategy} for the given {@link Key} and {@link ValueExpressionDelegate}. Favor
-	 * implementing this method over {@link #getQueryLookupStrategy(Key, QueryMethodEvaluationContextProvider)} for
-	 * extended {@link org.springframework.data.expression.ValueExpression} support.
-	 * <p>
-	 * This method delegates to {@link #getQueryLookupStrategy(Key, QueryMethodEvaluationContextProvider)} unless
-	 * overridden.
+	 * Returns the {@link QueryLookupStrategy} for the given {@link Key} and {@link ValueExpressionDelegate}.
 	 *
 	 * @param key can be {@literal null}.
 	 * @param valueExpressionDelegate will never be {@literal null}.
@@ -589,15 +572,11 @@ public abstract class RepositoryFactorySupport
 	 */
 	protected Optional<QueryLookupStrategy> getQueryLookupStrategy(@Nullable Key key,
 			ValueExpressionDelegate valueExpressionDelegate) {
-		return getQueryLookupStrategy(key,
-				new ExtensionAwareQueryMethodEvaluationContextProvider(evaluationContextProvider));
+		return Optional.empty();
 	}
 
 	/**
 	 * Validates the given repository interface as well as the given custom implementation.
-	 *
-	 * @param repositoryInformation
-	 * @param composition
 	 */
 	private void validate(RepositoryInformation repositoryInformation, RepositoryComposition composition) {
 
@@ -613,10 +592,6 @@ public abstract class RepositoryFactorySupport
 	/**
 	 * Creates a repository of the repository base class defined in the given {@link RepositoryInformation} using
 	 * reflection.
-	 *
-	 * @param information
-	 * @param constructorArguments
-	 * @return
 	 */
 	protected final <R> R getTargetRepositoryViaReflection(RepositoryInformation information,
 			Object... constructorArguments) {
@@ -626,42 +601,26 @@ public abstract class RepositoryFactorySupport
 	}
 
 	/**
-	 * Creates a repository of the repository base class defined in the given {@link RepositoryInformation} using
-	 * reflection.
-	 *
-	 * @param baseClass
-	 * @param constructorArguments
-	 * @return
-	 * @deprecated since 2.6 because it has a misleading name. Use {@link #instantiateClass(Class, Object...)} instead.
-	 */
-	@SuppressWarnings("unchecked")
-	@Deprecated
-	protected final <R> R getTargetRepositoryViaReflection(Class<?> baseClass, Object... constructorArguments) {
-		return instantiateClass(baseClass, constructorArguments);
-	}
-
-	/**
 	 * Convenience method to instantiate a class using the given {@code constructorArguments} by looking up a matching
 	 * constructor.
 	 * <p>
 	 * Note that this method tries to set the constructor accessible if given a non-accessible (that is, non-public)
 	 * constructor, and supports Kotlin classes with optional parameters and default values.
-	 *
-	 * @param baseClass
-	 * @param constructorArguments
-	 * @return
 	 * @since 2.6
 	 */
 	@SuppressWarnings("unchecked")
 	protected final <R> R instantiateClass(Class<?> baseClass, Object... constructorArguments) {
 
-		Optional<Constructor<?>> constructor = ReflectionUtils.findConstructor(baseClass, constructorArguments);
+		Constructor<?> constructor = ReflectionUtils.findConstructor(baseClass, constructorArguments);
 
-		return constructor.map(it -> (R) BeanUtils.instantiateClass(it, constructorArguments))
-				.orElseThrow(() -> new IllegalStateException(String.format(
-						"No suitable constructor found on %s to match the given arguments: %s. Make sure you implement a constructor taking these",
-						baseClass, Arrays.stream(constructorArguments).map(Object::getClass).map(ClassUtils::getQualifiedName)
-								.collect(Collectors.joining(", ")))));
+		if (constructor == null) {
+			throw new IllegalStateException(String.format(
+					"No suitable constructor found on %s to match the given arguments: %s. Make sure you implement a constructor taking these",
+					baseClass, Arrays.stream(constructorArguments).map(Object::getClass).map(ClassUtils::getQualifiedName)
+							.collect(Collectors.joining(", "))));
+		}
+
+		return (R) BeanUtils.instantiateClass(constructor, constructorArguments);
 	}
 
 	private ApplicationStartup getStartup() {
@@ -691,7 +650,7 @@ public abstract class RepositoryFactorySupport
 	 * Checks if at least one {@link RepositoryFragment} indicates need to access to {@link RepositoryMetadata} by being
 	 * flagged with {@link RepositoryMetadataAccess}.
 	 *
-	 * @param fragments
+	 * @param fragments the fragments to intospect.
 	 * @return {@literal true} if access to metadata is required.
 	 */
 	private static boolean shouldExposeMetadata(RepositoryFragments fragments) {
@@ -711,21 +670,18 @@ public abstract class RepositoryFactorySupport
 	 */
 	static class ImplementationMethodExecutionInterceptor implements MethodInterceptor {
 
-		private final RepositoryInformation information;
 		private final RepositoryComposition composition;
 		private final RepositoryInvocationMulticaster invocationMulticaster;
 
 		public ImplementationMethodExecutionInterceptor(RepositoryInformation information,
 				RepositoryComposition composition, List<RepositoryMethodInvocationListener> methodInvocationListeners) {
-			this.information = information;
 			this.composition = composition;
 			this.invocationMulticaster = methodInvocationListeners.isEmpty() ? NoOpRepositoryInvocationMulticaster.INSTANCE
 					: new DefaultRepositoryInvocationMulticaster(methodInvocationListeners);
 		}
 
-		@Nullable
 		@Override
-		public Object invoke(@SuppressWarnings("null") MethodInvocation invocation) throws Throwable {
+		public @Nullable Object invoke(@SuppressWarnings("null") MethodInvocation invocation) throws Throwable {
 
 			Method method = invocation.getMethod();
 			Object[] arguments = invocation.getArguments();
@@ -733,6 +689,7 @@ public abstract class RepositoryFactorySupport
 			try {
 				return composition.invoke(invocationMulticaster, method, arguments);
 			} catch (Exception ex) {
+
 				if (ex instanceof InvocationTargetException) {
 					throw ((InvocationTargetException) ex).getTargetException();
 				}
@@ -753,9 +710,8 @@ public abstract class RepositoryFactorySupport
 			this.repositoryMetadata = repositoryMetadata;
 		}
 
-		@Nullable
 		@Override
-		public Object invoke(MethodInvocation invocation) throws Throwable {
+		public @Nullable Object invoke(MethodInvocation invocation) throws Throwable {
 
 			RepositoryMethodContext oldMetadata = null;
 

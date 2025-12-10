@@ -34,11 +34,13 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.beans.BeanInfoFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.Ordered;
-import org.springframework.lang.Nullable;
+import org.springframework.lang.Contract;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
@@ -55,7 +57,7 @@ import org.springframework.util.StringUtils;
 public class KotlinBeanInfoFactory implements BeanInfoFactory, Ordered {
 
 	@Override
-	public BeanInfo getBeanInfo(Class<?> beanClass) throws IntrospectionException {
+	public @Nullable BeanInfo getBeanInfo(Class<?> beanClass) throws IntrospectionException {
 
 		if (beanClass.isInterface() || beanClass.isEnum()) {
 			return null; // back-off to leave interface-based properties to the default mechanism.
@@ -156,8 +158,8 @@ public class KotlinBeanInfoFactory implements BeanInfoFactory, Ordered {
 		}
 	}
 
-	@Nullable
-	private static Method specialize(Class<?> beanClass, @Nullable Method method) {
+	@Contract("_, null -> null; _, !null -> !null")
+	private static @Nullable Method specialize(Class<?> beanClass, @Nullable Method method) {
 
 		if (method == null) {
 			return method;
@@ -195,8 +197,7 @@ public class KotlinBeanInfoFactory implements BeanInfoFactory, Ordered {
 		}
 
 		@Override
-		@Nullable
-		public Method getReadMethod() {
+		public @Nullable Method getReadMethod() {
 			return this.readMethod;
 		}
 

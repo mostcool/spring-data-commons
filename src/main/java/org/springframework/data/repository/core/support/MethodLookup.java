@@ -21,7 +21,10 @@ import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.lang.CheckReturnValue;
+import org.springframework.lang.Contract;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -55,6 +58,8 @@ public interface MethodLookup {
 	 * @param other must not be {@literal null}.
 	 * @return the composed {@link MethodLookup}.
 	 */
+	@Contract("_ -> new")
+	@CheckReturnValue
 	default MethodLookup and(MethodLookup other) {
 
 		Assert.notNull(other, "Other method lookup must not be null");

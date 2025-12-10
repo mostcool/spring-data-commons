@@ -27,11 +27,13 @@ import java.util.function.Supplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.aop.SpringProxy;
 import org.springframework.aop.framework.Advised;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.PropertyHandler;
@@ -45,7 +47,6 @@ import org.springframework.data.mapping.model.DataClassWithLazy;
 import org.springframework.data.mapping.model.SimpleTypeHolder;
 import org.springframework.data.util.StreamUtils;
 import org.springframework.data.util.Streamable;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit test for {@link AbstractMappingContext}.
@@ -116,6 +117,18 @@ class AbstractMappingContextUnitTests {
 		PersistentEntity<Object, SamplePersistentProperty> entity = mappingContext
 				.getRequiredPersistentEntity(Sample.class);
 		assertThat(entity.getPersistentProperty("metaClass")).isNull();
+	}
+
+	@Test // GH-2595
+	void doesNotCreatePersistentPropertyHibernateBytecodeEnhancements() {
+
+		var mappingContext = new SampleMappingContext();
+		mappingContext.initialize();
+
+		PersistentEntity<Object, SamplePersistentProperty> entity = mappingContext
+				.getRequiredPersistentEntity(Sample.class);
+		assertThat(entity.getPersistentProperty("$$_hibernate")).isNull();
+		assertThat(mappingContext.hasPersistentEntityFor(Excluded.class)).isFalse();
 	}
 
 	@Test // DATACMNS-332
@@ -401,8 +414,13 @@ class AbstractMappingContextUnitTests {
 	class Sample {
 
 		MetaClass metaClass;
+		Excluded $$_hibernate;
 		List<Person> persons;
 		TreeMap<String, Person> personMap;
+	}
+
+	class Excluded {
+
 	}
 
 	static class Base {

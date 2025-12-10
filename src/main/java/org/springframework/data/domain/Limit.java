@@ -15,9 +15,10 @@
  */
 package org.springframework.data.domain;
 
+import org.jspecify.annotations.Nullable;
+
 import org.springframework.data.domain.Limit.Limited;
 import org.springframework.data.domain.Limit.Unlimited;
-import org.springframework.lang.Nullable;
 
 /**
  * {@link Limit} represents the maximum value up to which an operation should continue processing. It may be used for
@@ -113,7 +114,7 @@ public sealed interface Limit permits Limited, Unlimited {
 
 		@Override
 		public int hashCode() {
-			return max ^ max >>> 32;
+			return max;
 		}
 	}
 

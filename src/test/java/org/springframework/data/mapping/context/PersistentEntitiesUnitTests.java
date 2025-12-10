@@ -24,18 +24,19 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Reference;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.MappingException;
 import org.springframework.data.mapping.model.BasicPersistentEntity;
-import org.springframework.data.util.TypeInformation;
 
 /**
  * Unit tests for {@link PersistentEntities}.
  *
  * @author Oliver Gierke
  * @author Christoph Strobl
- * @author Mar Paluch
+ * @author Mark Paluch
  */
 @ExtendWith(MockitoExtension.class)
 class PersistentEntitiesUnitTests {
@@ -46,6 +47,16 @@ class PersistentEntitiesUnitTests {
 	@Test // DATACMNS-458
 	void rejectsNullMappingContexts() {
 		assertThatIllegalArgumentException().isThrownBy(() -> new PersistentEntities(null));
+	}
+
+	@Test // GH-3310
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	void lazilyAccessesIterableOfMappingContext() {
+
+		Iterable iterable = mock(Iterable.class);
+		new PersistentEntities(iterable);
+
+		verifyNoInteractions(iterable);
 	}
 
 	@Test // DATACMNS-458

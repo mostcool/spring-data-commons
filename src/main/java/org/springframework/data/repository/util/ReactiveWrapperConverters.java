@@ -26,20 +26,21 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
+
 import org.springframework.core.ReactiveAdapter;
 import org.springframework.core.ReactiveAdapterRegistry;
-import org.springframework.core.convert.ConversionService;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.ConditionalConverter;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterFactory;
 import org.springframework.core.convert.support.ConfigurableConversionService;
 import org.springframework.core.convert.support.GenericConversionService;
-import org.springframework.data.util.ReactiveWrappers.ReactiveLibrary;
-import org.springframework.data.util.TypeInformation;
-import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
+import org.springframework.data.core.ReactiveWrappers;
+import org.springframework.data.core.ReactiveWrappers.ReactiveLibrary;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
@@ -55,7 +56,7 @@ import org.springframework.util.ClassUtils;
  * @author Christoph Strobl
  * @author Hantsy Bai
  * @since 2.0
- * @see org.springframework.data.util.ReactiveWrappers
+ * @see ReactiveWrappers
  * @see ReactiveAdapterRegistry
  */
 public abstract class ReactiveWrapperConverters {
@@ -63,13 +64,13 @@ public abstract class ReactiveWrapperConverters {
 	private static final List<ReactiveTypeWrapper<?>> REACTIVE_WRAPPERS = new ArrayList<>();
 	private static final GenericConversionService GENERIC_CONVERSION_SERVICE = new GenericConversionService();
 
-	private static final boolean RXJAVA3_PRESENT = org.springframework.data.util.ReactiveWrappers
+	private static final boolean RXJAVA3_PRESENT = ReactiveWrappers
 			.isAvailable(ReactiveLibrary.RXJAVA3);
-	private static final boolean REACTOR_PRESENT = org.springframework.data.util.ReactiveWrappers
+	private static final boolean REACTOR_PRESENT = ReactiveWrappers
 			.isAvailable(ReactiveLibrary.PROJECT_REACTOR);
-	private static final boolean KOTLIN_COROUTNES_PRESENT = org.springframework.data.util.ReactiveWrappers
+	private static final boolean KOTLIN_COROUTNES_PRESENT = ReactiveWrappers
 			.isAvailable(ReactiveLibrary.KOTLIN_COROUTINES);
-	private static final boolean MUTINY_PRESENT = org.springframework.data.util.ReactiveWrappers
+	private static final boolean MUTINY_PRESENT = ReactiveWrappers
 			.isAvailable(ReactiveLibrary.MUTINY);
 
 	static {
@@ -108,7 +109,7 @@ public abstract class ReactiveWrapperConverters {
 	 *
 	 * @param conversionService must not be {@literal null}.
 	 */
-	private static ConversionService registerConvertersIn(ConfigurableConversionService conversionService) {
+	private static void registerConvertersIn(ConfigurableConversionService conversionService) {
 
 		Assert.notNull(conversionService, "ConversionService must not be null");
 
@@ -125,8 +126,6 @@ public abstract class ReactiveWrapperConverters {
 				conversionService.addConverterFactory(ReactiveAdapterConverterFactory.INSTANCE);
 			}
 		}
-
-		return conversionService;
 	}
 
 	/**
@@ -167,8 +166,7 @@ public abstract class ReactiveWrapperConverters {
 	 * @param targetWrapperType must not be {@literal null}.
 	 * @return
 	 */
-	@Nullable
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked" })
 	public static <T> T toWrapper(Object reactiveObject, Class<? extends T> targetWrapperType) {
 
 		Assert.notNull(reactiveObject, "Reactive source object must not be null");
@@ -178,7 +176,13 @@ public abstract class ReactiveWrapperConverters {
 			return (T) reactiveObject;
 		}
 
-		return GENERIC_CONVERSION_SERVICE.convert(reactiveObject, targetWrapperType);
+		T convert = GENERIC_CONVERSION_SERVICE.convert(reactiveObject, targetWrapperType);
+
+		if (convert == null) {
+			throw new IllegalStateException("Wait, what?");
+		}
+
+		return convert;
 	}
 
 	/**
@@ -262,7 +266,7 @@ public abstract class ReactiveWrapperConverters {
 
 		@Override
 		public Mono<?> map(Object wrapper, Function<Object, Object> function) {
-			return ((Mono<?>) wrapper).map(function::apply);
+			return ((Mono<?>) wrapper).map(function);
 		}
 	}
 
@@ -531,13 +535,13 @@ public abstract class ReactiveWrapperConverters {
 			return source -> {
 
 				Publisher<?> publisher = source instanceof Publisher ? (Publisher<?>) source
-						: RegistryHolder.REACTIVE_ADAPTER_REGISTRY.getAdapter(Publisher.class, source).toPublisher(source);
-
-				ReactiveAdapter adapter = RegistryHolder.REACTIVE_ADAPTER_REGISTRY.getAdapter(targetType);
+						: RegistryHolder.getAdapter(Publisher.class, source).toPublisher(source);
+				ReactiveAdapter adapter = RegistryHolder.getAdapter(targetType);
 
 				return (T) adapter.fromPublisher(publisher);
 			};
 		}
+
 	}
 
 	/**
@@ -552,11 +556,45 @@ public abstract class ReactiveWrapperConverters {
 
 		static {
 
-			if (org.springframework.data.util.ReactiveWrappers.PROJECT_REACTOR_PRESENT) {
+			if (ReactiveWrappers.PROJECT_REACTOR_PRESENT) {
 				REACTIVE_ADAPTER_REGISTRY = ReactiveAdapterRegistry.getSharedInstance();
 			} else {
 				REACTIVE_ADAPTER_REGISTRY = null;
 			}
+		}
+
+		static ReactiveAdapterRegistry getReactiveAdapterRegistry() {
+
+			if (REACTIVE_ADAPTER_REGISTRY == null) {
+				throw new IllegalStateException(
+						"ReactiveAdapterRegistry not available. Make sure to have Project Reactor on your classpath!");
+			}
+
+			return REACTIVE_ADAPTER_REGISTRY;
+		}
+
+		public static ReactiveAdapter getAdapter(Class<?> reactiveType, Object source) {
+
+			ReactiveAdapter adapter = getReactiveAdapterRegistry().getAdapter(reactiveType, source);
+
+			if (adapter == null) {
+				throw new IllegalArgumentException("Cannot convert Reactive Type '%s' (%s) to Publisher"
+						.formatted(reactiveType.getName(), source.getClass().getName()));
+			}
+
+			return adapter;
+		}
+
+		public static ReactiveAdapter getAdapter(Class<?> reactiveType) {
+
+			ReactiveAdapter adapter = getReactiveAdapterRegistry().getAdapter(reactiveType);
+
+			if (adapter == null) {
+				throw new IllegalArgumentException(
+						"No ReactiveAdapter for '%s' conversion registered.".formatted(reactiveType.getName()));
+			}
+
+			return adapter;
 		}
 	}
 }

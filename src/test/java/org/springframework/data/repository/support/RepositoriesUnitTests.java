@@ -28,12 +28,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.data.core.TypeInformation;
 import org.springframework.data.mapping.PersistentEntity;
 import org.springframework.data.mapping.context.SampleMappingContext;
 import org.springframework.data.repository.CrudRepository;
@@ -46,8 +48,8 @@ import org.springframework.data.repository.core.support.DummyEntityInformation;
 import org.springframework.data.repository.core.support.DummyRepositoryFactoryBean;
 import org.springframework.data.repository.core.support.DummyRepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryFactoryInformation;
+import org.springframework.data.repository.core.support.RepositoryFragmentsContributor;
 import org.springframework.data.repository.query.QueryMethod;
-import org.springframework.data.util.TypeInformation;
 import org.springframework.util.ClassUtils;
 
 /**
@@ -288,6 +290,11 @@ class RepositoriesUnitTests {
 		@Override
 		public RepositoryInformation getRepositoryInformation() {
 			return new DummyRepositoryInformation(repositoryMetadata);
+		}
+
+		@Override
+		public RepositoryFragmentsContributor getRepositoryFragmentsContributor() {
+			return RepositoryFragmentsContributor.empty();
 		}
 
 		@Override

@@ -18,9 +18,11 @@ package org.springframework.data.aot;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.lang.model.element.Modifier;
+
+import org.jspecify.annotations.Nullable;
 
 import org.springframework.aot.generate.AccessControl;
 import org.springframework.aot.generate.GeneratedMethod;
@@ -41,7 +43,6 @@ import org.springframework.javapoet.MethodSpec.Builder;
 import org.springframework.javapoet.ParameterizedTypeName;
 import org.springframework.javapoet.TypeName;
 import org.springframework.javapoet.WildcardTypeName;
-import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
@@ -68,21 +69,24 @@ import org.springframework.util.ReflectionUtils;
  * @author John Blum
  * @author Christoph Strobl
  * @author Mark Paluch
- * @see org.springframework.beans.factory.aot.BeanRegistrationAotContribution
  * @since 3.0
+ * @see org.springframework.beans.factory.aot.BeanRegistrationAotContribution
  */
 class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContribution {
 
-	private final ManagedTypes managedTypes;
+	private final AotContext aotContext;
 	private final Lazy<List<Class<?>>> sourceTypes;
-	private final BiConsumer<ResolvableType, GenerationContext> contributionAction;
+	private final Consumer<TypeCollector> typeCollectorCustomizer;
+	private final TypeRegistration contributionAction;
 	private final RegisteredBean source;
 
-	public ManagedTypesRegistrationAotContribution(ManagedTypes managedTypes, RegisteredBean registeredBean,
-			BiConsumer<ResolvableType, GenerationContext> contributionAction) {
+	public ManagedTypesRegistrationAotContribution(AotContext aotContext, ManagedTypes managedTypes,
+			RegisteredBean registeredBean, Consumer<TypeCollector> typeCollectorCustomizer,
+			TypeRegistration contributionAction) {
 
-		this.managedTypes = managedTypes;
+		this.aotContext = aotContext;
 		this.sourceTypes = Lazy.of(managedTypes::toList);
+		this.typeCollectorCustomizer = typeCollectorCustomizer;
 		this.contributionAction = contributionAction;
 		this.source = registeredBean;
 	}
@@ -93,17 +97,16 @@ class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContri
 		List<Class<?>> types = sourceTypes.get();
 
 		if (!types.isEmpty()) {
-			TypeCollector.inspect(types).forEach(type -> contributionAction.accept(type, generationContext));
+			TypeCollector.inspect(typeCollectorCustomizer, types)
+					.forEach(type -> contributionAction.register(type, aotContext, generationContext));
 		}
+
+		aotContext.contributeTypeConfigurations(generationContext);
 	}
 
 	@Override
 	public BeanRegistrationCodeFragments customizeBeanRegistrationCodeFragments(GenerationContext generationContext,
 			BeanRegistrationCodeFragments codeFragments) {
-
-		if (managedTypes == null) {
-			return codeFragments;
-		}
 
 		ManagedTypesInstanceCodeFragment fragment = new ManagedTypesInstanceCodeFragment(sourceTypes.get(), source,
 				codeFragments);
@@ -113,6 +116,10 @@ class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContri
 	@Override
 	public RegisteredBean getSource() {
 		return source;
+	}
+
+	interface TypeRegistration {
+		void register(ResolvableType type, AotContext aotContext, GenerationContext generationContext);
 	}
 
 	/**
@@ -125,7 +132,7 @@ class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContri
 		public static final ResolvableType MANAGED_TYPES_TYPE = ResolvableType.forType(ManagedTypes.class);
 		private final List<Class<?>> sourceTypes;
 		private final RegisteredBean source;
-		private final Lazy<Method> instanceMethod = Lazy.of(this::findInstanceFactory);
+		private final Lazy<Method> instanceMethod;
 
 		private static final TypeName WILDCARD = WildcardTypeName.subtypeOf(Object.class);
 		private static final TypeName CLASS_OF_ANY = ParameterizedTypeName.get(ClassName.get(Class.class), WILDCARD);
@@ -138,10 +145,12 @@ class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContri
 
 			this.sourceTypes = sourceTypes;
 			this.source = source;
+			this.instanceMethod = Lazy.of(() -> findInstanceFactory(source.getBeanClass()));
 		}
 
 		@Override
-		public CodeBlock generateInstanceSupplierCode(GenerationContext generationContext, BeanRegistrationCode beanRegistrationCode, boolean allowDirectSupplierShortcut) {
+		public CodeBlock generateInstanceSupplierCode(GenerationContext generationContext,
+				BeanRegistrationCode beanRegistrationCode, boolean allowDirectSupplierShortcut) {
 
 			GeneratedMethod generatedMethod = beanRegistrationCode.getMethods().add("Instance",
 					this::generateInstanceFactory);
@@ -229,15 +238,15 @@ class ManagedTypesRegistrationAotContribution implements RegisteredBeanAotContri
 		}
 
 		@Nullable
-		private Method findInstanceFactory() {
+		private static Method findInstanceFactory(Class<?> beanClass) {
 
-			for (Method beanMethod : ReflectionUtils.getDeclaredMethods(source.getBeanClass())) {
+			for (Method beanMethod : ReflectionUtils.getDeclaredMethods(beanClass)) {
 
 				if (!isInstanceFactory(beanMethod)) {
 					continue;
 				}
 
-				ResolvableType parameterType = ResolvableType.forMethodParameter(beanMethod, 0, source.getBeanClass());
+				ResolvableType parameterType = ResolvableType.forMethodParameter(beanMethod, 0, beanClass);
 
 				if (parameterType.isAssignableFrom(LIST_TYPE) || parameterType.isAssignableFrom(MANAGED_TYPES_TYPE)) {
 					return beanMethod;

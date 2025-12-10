@@ -15,8 +15,10 @@
  */
 package org.springframework.data.geo;
 
+import java.io.Serial;
 import java.io.Serializable;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -29,7 +31,7 @@ import org.springframework.util.ObjectUtils;
  */
 public final class GeoResult<T> implements Serializable {
 
-	private static final long serialVersionUID = 1637452570977581370L;
+	private static final @Serial long serialVersionUID = 1637452570977581370L;
 
 	private final T content;
 	private final Distance distance;
@@ -52,7 +54,7 @@ public final class GeoResult<T> implements Serializable {
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(@Nullable Object o) {
 
 		if (this == o) {
 			return true;
@@ -71,13 +73,11 @@ public final class GeoResult<T> implements Serializable {
 
 	@Override
 	public int hashCode() {
-		int result = ObjectUtils.nullSafeHashCode(content);
-		result = 31 * result + ObjectUtils.nullSafeHashCode(distance);
-		return result;
+		return ObjectUtils.nullSafeHash(content, distance);
 	}
 
 	@Override
 	public String toString() {
-		return String.format("GeoResult [content: %s, distance: %s, ]", content.toString(), distance.toString());
+		return String.format("GeoResult [content: %s, distance: %s]", content, distance);
 	}
 }

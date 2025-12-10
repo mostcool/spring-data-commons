@@ -18,6 +18,10 @@ package org.springframework.data.auditing;
 import java.time.temporal.TemporalAccessor;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
+
+import org.springframework.lang.Contract;
+
 /**
  * Interface to abstract the ways setting the auditing information can be implemented.
  *
@@ -31,7 +35,9 @@ public interface AuditableBeanWrapper<T> {
 	 *
 	 * @param value
 	 */
-	Object setCreatedBy(Object value);
+	@Nullable
+	@Contract("null -> null; !null -> !null")
+	Object setCreatedBy(@Nullable Object value);
 
 	/**
 	 * Set the date the object was created.
@@ -45,7 +51,9 @@ public interface AuditableBeanWrapper<T> {
 	 *
 	 * @param value
 	 */
-	Object setLastModifiedBy(Object value);
+	@Nullable
+	@Contract("null -> null; !null -> !null")
+	Object setLastModifiedBy(@Nullable Object value);
 
 	/**
 	 * Returns the date of the last modification date of the backing bean.

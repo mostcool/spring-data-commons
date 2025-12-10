@@ -15,14 +15,16 @@
  */
 package org.springframework.data.mapping;
 
-import org.springframework.lang.Nullable;
+import java.io.Serial;
+
+import org.jspecify.annotations.Nullable;
 
 /**
  * @author Jon Brisbin
  */
 public class MappingException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+	private static final @Serial long serialVersionUID = 1L;
 
 	public MappingException(@Nullable String s) {
 		super(s);
