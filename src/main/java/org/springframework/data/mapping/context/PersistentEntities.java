@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2025 the original author or authors.
+ * Copyright 2014-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public class PersistentEntities implements Streamable<PersistentEntity<?, ? exte
 	 * @return result of the {@link BiFunction}.
 	 */
 	public <T> Optional<T> mapOnContext(Class<?> type,
-			BiFunction<MappingContext<?, ? extends PersistentProperty<?>>, PersistentEntity<?, ?>, T> combiner) {
+			BiFunction<MappingContext<?, ? extends PersistentProperty<?>>, PersistentEntity<?, ?>, @Nullable T> combiner) {
 
 		Assert.notNull(type, "Type must not be null");
 		Assert.notNull(combiner, "Combining BiFunction must not be null");
@@ -144,16 +144,21 @@ public class PersistentEntities implements Streamable<PersistentEntity<?, ? exte
 		Collection<? extends MappingContext<?, ? extends PersistentProperty<?>>> mappingContexts = getMappingContexts();
 
 		if (mappingContexts.size() == 1) {
-			return mappingContexts.stream() //
-					.filter(it -> it.getPersistentEntity(type) != null) //
-					.map(it -> combiner.apply(it, it.getRequiredPersistentEntity(type))) //
-					.findFirst();
+			for (MappingContext<?, ? extends PersistentProperty<?>> it : mappingContexts) {
+				if (it.getPersistentEntity(type) != null) {
+					return Optional.ofNullable(combiner.apply(it, it.getRequiredPersistentEntity(type)));
+				}
+			}
+			return Optional.empty();
 		}
 
-		return mappingContexts.stream() //
-				.filter(it -> it.hasPersistentEntityFor(type)) //
-				.map(it -> combiner.apply(it, it.getRequiredPersistentEntity(type))) //
-				.findFirst();
+		for (MappingContext<?, ? extends PersistentProperty<?>> it : mappingContexts) {
+			if (it.hasPersistentEntityFor(type)) {
+				return Optional.ofNullable(combiner.apply(it, it.getRequiredPersistentEntity(type)));
+			}
+		}
+
+		return Optional.empty();
 	}
 
 	/**

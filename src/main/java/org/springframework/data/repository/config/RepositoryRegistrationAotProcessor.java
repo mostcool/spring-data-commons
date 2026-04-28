@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 the original author or authors.
+ * Copyright 2022-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.commons.logging.Log;
@@ -51,6 +52,7 @@ import org.springframework.data.repository.aot.generate.RepositoryContributor;
 import org.springframework.data.repository.core.RepositoryInformation;
 import org.springframework.data.repository.core.support.RepositoryFactoryBeanSupport;
 import org.springframework.data.repository.core.support.RepositoryFragment;
+import org.springframework.data.util.TypeCollector;
 import org.springframework.data.util.TypeContributor;
 import org.springframework.data.util.TypeUtils;
 import org.springframework.util.Assert;
@@ -275,6 +277,16 @@ public class RepositoryRegistrationAotProcessor
 	}
 
 	/**
+	 * Customization hook to configure {@link TypeCollector}.
+	 *
+	 * @return a {@link Consumer} to customize the {@link TypeCollector}, must not be {@literal null}.
+	 * @since 4.0
+	 */
+	protected Consumer<TypeCollector> typeCollectorCustomizer() {
+		return typeCollector -> {};
+	}
+
+	/**
 	 * This method allows for the creation to be overridden by subclasses.
 	 *
 	 * @param repositoryContext the context for the repository being processed.
@@ -344,10 +356,13 @@ public class RepositoryRegistrationAotProcessor
 							.formatted(bean.getBeanName()));
 			return null;
 		}
+
+		AotContext aotContext = AotContext.builder().beanFactory(bean.getBeanFactory()).environment(environment)
+				.customizeTypeCollector(typeCollectorCustomizer()).build();
+
 		RepositoryInformation repositoryInformation = reader.getRepositoryInformation();
 		DefaultAotRepositoryContext repositoryContext = new DefaultAotRepositoryContext(bean, repositoryInformation,
-				extension.getModuleName(), AotContext.from(bean.getBeanFactory(), environment),
-				configuration.getConfigurationSource());
+				extension.getModuleName(), aotContext, configuration.getConfigurationSource());
 
 		repositoryContext.setIdentifyingAnnotations(extension.getIdentifyingAnnotations());
 

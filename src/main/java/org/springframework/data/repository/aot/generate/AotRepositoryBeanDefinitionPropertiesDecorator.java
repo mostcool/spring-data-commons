@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2025-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import javax.lang.model.element.Modifier;
 
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.repository.aot.generate.AotRepositoryFragmentMetadata.ConstructorArgument;
@@ -102,8 +101,6 @@ public class AotRepositoryBeanDefinitionPropertiesDecorator {
 			for (int i = 0; i < it.getParameterCount(); i++) {
 
 				MethodParameter parameter = new MethodParameter(it, i);
-				parameter.initParameterNameDiscovery(new DefaultParameterNameDiscoverer());
-
 				callbackMethod.addParameter(parameter.getParameterType(), parameter.getParameterName());
 			}
 

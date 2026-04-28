@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,7 +251,7 @@ public abstract class RepositoryConfigurationExtensionSupport implements Reposit
 	}
 
 	/**
-	 * Creates a actual {@link RepositoryConfiguration} instance for the given {@link RepositoryConfigurationSource} and
+	 * Creates an actual {@link RepositoryConfiguration} instance for the given {@link RepositoryConfigurationSource} and
 	 * interface name. Defaults to the {@link DefaultRepositoryConfiguration} but allows sub-classes to override this to
 	 * customize the behavior.
 	 *

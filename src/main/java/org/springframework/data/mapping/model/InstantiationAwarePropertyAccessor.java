@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2019-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,12 @@ import org.springframework.util.Assert;
  * A {@link PersistentPropertyAccessor} that will use an entity's
  * {@link org.springframework.data.annotation.PersistenceCreator} to create a new instance of it to apply a new value
  * for a given {@link PersistentProperty}. Will only be used if the {@link PersistentProperty} is to be applied on a
- * completely immutable entity type exposing a entity creator.
+ * completely immutable entity type exposing an entity creator.
  *
  * @author Oliver Drotbohm
  * @author Mark Paluch
  * @author Johannes Englmeier
+ * @author Christoph Strobl
  * @since 2.3
  */
 public class InstantiationAwarePropertyAccessor<T> implements PersistentPropertyAccessor<T> {
@@ -110,9 +111,16 @@ public class InstantiationAwarePropertyAccessor<T> implements PersistentProperty
 			@SuppressWarnings("NullAway")
 			public @Nullable Object getParameterValue(Parameter parameter) {
 
-				return property.getName().equals(parameter.getName()) //
-						? value
-						: delegate.getProperty(owner.getRequiredPersistentProperty(parameter.getName()));
+				if (property.getName().equals(parameter.getName())) {
+					return value;
+				}
+
+				String paramName = parameter.getName();
+				if (paramName != null && parameter.isTransient()) {
+					return ParameterValueProvider.getDefaultValue(parameter.getRawType());
+				}
+
+				return delegate.getProperty(owner.getRequiredPersistentProperty(paramName));
 			}
 		});
 	}

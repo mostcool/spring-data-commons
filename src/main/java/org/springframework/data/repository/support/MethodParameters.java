@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,7 @@ import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.data.util.Lazy;
 import org.springframework.util.Assert;
 
@@ -39,7 +37,6 @@ import org.springframework.util.Assert;
  */
 class MethodParameters {
 
-	private final static ParameterNameDiscoverer discoverer = new DefaultParameterNameDiscoverer();
 	private final List<MethodParameter> parameters;
 
 	/**
@@ -66,7 +63,6 @@ class MethodParameters {
 		for (int i = 0; i < method.getParameterCount(); i++) {
 
 			MethodParameter parameter = new AnnotationNamingMethodParameter(method, i, namingAnnotation);
-			parameter.initParameterNameDiscovery(discoverer);
 			parameters.add(parameter);
 		}
 	}

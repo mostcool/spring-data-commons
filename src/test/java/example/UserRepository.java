@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 the original author or authors.
+ * Copyright 2024-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import example.UserRepository.User;
 import java.util.List;
 
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 /**
  * @author Christoph Strobl
  */
 public interface UserRepository extends CrudRepository<User, Long>, UserRepositoryExtension {
 
-	User findByFirstname(String firstname);
+	User findByFirstname(@Param("hello") String firstname);
 
 	List<User> findByFirstnameIn(List<String> firstnames);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public interface ValueExpression {
 	/**
 	 * Returns whether the expression is a literal expression (that doesn't actually require evaluation).
 	 *
-	 * @return {@code true} if the expression is a literal expression; {@code false} if the expression can yield a
+	 * @return {@literal true} if the expression is a literal expression; {@literal false} if the expression can yield a
 	 *         different result upon {@link #evaluate(ValueEvaluationContext) evaluation}.
 	 */
 	boolean isLiteral();

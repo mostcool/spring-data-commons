@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 the original author or authors.
+ * Copyright 2021-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
+import org.springframework.data.core.PropertyPath;
+import org.springframework.data.core.TypedPropertyPath;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.ScrollPosition;
@@ -104,6 +106,20 @@ public interface FluentQuery<T> {
 	 * @param properties must not be {@code null}.
 	 * @return a new instance of {@link FluentQuery}.
 	 * @throws IllegalArgumentException if {@code properties} is {@code null}.
+	 * @since 4.1
+	 */
+	@Contract("_ -> new")
+	@CheckReturnValue
+	default FluentQuery<T> project(TypedPropertyPath<T, ?>... properties) {
+		return project(Arrays.stream(properties).map(PropertyPath::toDotPath).toList());
+	}
+
+	/**
+	 * Define which properties or property paths to include in the query.
+	 *
+	 * @param properties must not be {@code null}.
+	 * @return a new instance of {@link FluentQuery}.
+	 * @throws IllegalArgumentException if {@code properties} is {@code null}.
 	 */
 	@Contract("_ -> new")
 	@CheckReturnValue
@@ -139,6 +155,13 @@ public interface FluentQuery<T> {
 		@CheckReturnValue
 		default FetchableFluentQuery<T> project(String... properties) {
 			return project(Arrays.asList(properties));
+		}
+
+		@Override
+		@Contract("_ -> new")
+		@CheckReturnValue
+		default FluentQuery<T> project(TypedPropertyPath<T, ?>... properties) {
+			return project(Arrays.stream(properties).map(PropertyPath::toDotPath).toList());
 		}
 
 		@Override
@@ -276,6 +299,13 @@ public interface FluentQuery<T> {
 		@CheckReturnValue
 		default ReactiveFluentQuery<T> project(String... properties) {
 			return project(Arrays.asList(properties));
+		}
+
+		@Override
+		@Contract("_ -> new")
+		@CheckReturnValue
+		default FluentQuery<T> project(TypedPropertyPath<T, ?>... properties) {
+			return project(Arrays.stream(properties).map(PropertyPath::toDotPath).toList());
 		}
 
 		@Override

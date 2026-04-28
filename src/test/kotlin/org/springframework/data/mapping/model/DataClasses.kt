@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 the original author or authors.
+ * Copyright 2018-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.data.mapping.model
 import org.jmolecules.ddd.types.AggregateRoot
 import org.jmolecules.ddd.types.Identifier
 import org.springframework.data.annotation.Id
+import org.springframework.data.annotation.Transient
 import java.time.LocalDateTime
 
 /**
@@ -54,6 +55,10 @@ data class DataClassAggregate(val identifier: DataClassId) :
 data class SingleSettableProperty constructor(val id: Double = Math.random()) {
 	val version: Int? = null
 }
+
+// note: Kotlin ships also a @Transient annotation to indicate JVM's transient keyword.
+data class DataClassWithTransientProperty(val firstname: String, @Transient val lastname: String)
+data class DataClassWithTransientProperties(@Transient val foo: String = "foo", @Transient val bar: Int)
 
 data class WithCustomCopyMethod(
 	val id: String?,

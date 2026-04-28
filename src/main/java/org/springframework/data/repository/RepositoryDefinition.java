@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public @interface RepositoryDefinition {
 	 * The domain class the repository manages. Equivalent to the T type parameter in {@link Repository}.
 	 *
 	 * @see Repository
-	 * @return
+	 * @return the domain class managed by the repository.
 	 */
 	Class<?> domainClass();
 
@@ -50,7 +50,8 @@ public @interface RepositoryDefinition {
 	 * The id class of the entity the repository manages. Equivalent to the ID type parameter in {@link Repository}.
 	 *
 	 * @see Repository
-	 * @return
+	 * @return the id class of the entity managed by the repository.
 	 */
 	Class<?> idClass();
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 the original author or authors.
+ * Copyright 2017-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,9 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.KotlinDetector;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Nullness;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -52,7 +50,6 @@ import org.springframework.util.ObjectUtils;
  */
 public class NullnessMethodInvocationValidator implements MethodInterceptor {
 
-	private final ParameterNameDiscoverer discoverer = new DefaultParameterNameDiscoverer();
 	private final Map<Method, MethodNullness> nullabilityCache = new ConcurrentHashMap<>(16);
 
 	/**
@@ -79,7 +76,7 @@ public class NullnessMethodInvocationValidator implements MethodInterceptor {
 
 		if (nullness == null) {
 
-			nullness = MethodNullness.of(method, discoverer);
+			nullness = MethodNullness.of(method);
 			nullabilityCache.put(method, nullness);
 		}
 
@@ -141,7 +138,7 @@ public class NullnessMethodInvocationValidator implements MethodInterceptor {
 			this.methodParameters = methodParameters;
 		}
 
-		static MethodNullness of(Method method, ParameterNameDiscoverer discoverer) {
+		static MethodNullness of(Method method) {
 
 			boolean nullableReturn = isNullableParameter(new MethodParameter(method, -1));
 			boolean[] nullableParameters = new boolean[method.getParameterCount()];
@@ -150,7 +147,6 @@ public class NullnessMethodInvocationValidator implements MethodInterceptor {
 			for (int i = 0; i < method.getParameterCount(); i++) {
 
 				MethodParameter parameter = new MethodParameter(method, i);
-				parameter.initParameterNameDiscovery(discoverer);
 				nullableParameters[i] = isNullableParameter(parameter);
 				methodParameters[i] = parameter;
 			}

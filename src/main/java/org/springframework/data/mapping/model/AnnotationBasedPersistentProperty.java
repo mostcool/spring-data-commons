@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,10 +262,10 @@ public abstract class AnnotationBasedPersistentProperty<P extends PersistentProp
 	}
 
 	/**
-	 * Returns whether the property carries the an annotation of the given type.
+	 * Returns whether the property carries the annotation of the given type.
 	 *
 	 * @param annotationType the annotation type to look up.
-	 * @return
+	 * @return {@literal true} if the annotation is present, {@literal false} otherwise.
 	 */
 	@Override
 	public boolean isAnnotationPresent(Class<? extends Annotation> annotationType) {

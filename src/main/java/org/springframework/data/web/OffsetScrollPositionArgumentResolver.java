@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 the original author or authors.
+ * Copyright 2023-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface OffsetScrollPositionArgumentResolver extends HandlerMethodArgum
 	 * wrapped arguments in {@link java.util.Optional}.
 	 *
 	 * @param parameter the method parameter to resolve. This parameter must have previously been passed to
-	 *          {@link #supportsParameter} which must have returned {@code true}.
+	 *          {@link #supportsParameter} which must have returned {@literal true}.
 	 * @param mavContainer the ModelAndViewContainer for the current request
 	 * @param webRequest the current request
 	 * @param binderFactory a factory for creating {@link WebDataBinder} instances

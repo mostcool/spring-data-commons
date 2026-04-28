@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2025-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ class AotRepositoryMethodBuilderUnitTests {
 		when(methodGenerationContext.getExpressionMarker()).thenReturn(new ExpressionMarker());
 	}
 
-	@Test // GH-3279
+	@Test // GH-3279, GH-3458
 	void generatesMethodSkeletonBasedOnGenerationMetadata() throws NoSuchMethodException {
 
 		Method method = UserRepository.class.getMethod("findByFirstname", String.class);
@@ -67,7 +67,7 @@ class AotRepositoryMethodBuilderUnitTests {
 
 		AotRepositoryMethodBuilder builder = new AotRepositoryMethodBuilder(methodGenerationContext);
 		assertThat(builder.buildMethod().toString()) //
-				.containsPattern("public .*User findByFirstname\\(.*String firstname\\)");
+			.containsSubsequence("findByFirstname(", "@", "Param(\"hello\")", "String firstname)");
 	}
 
 	@Test // GH-3279

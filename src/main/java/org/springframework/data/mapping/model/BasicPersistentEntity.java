@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,11 +72,14 @@ public class BasicPersistentEntity<T, P extends PersistentProperty<P>>
 	private final @Nullable InstanceCreatorMetadata<P> creator;
 	private final TypeInformation<T> information;
 	private final List<P> properties;
+	private final List<P> transientProperties;
 	private final List<P> persistentPropertiesCache;
 	private final @Nullable Comparator<P> comparator;
 	private final Set<Association<P>> associations;
 
 	private final Map<String, P> propertyCache;
+
+	private final Map<String, P> transientPropertyCache;
 	private final Map<Class<? extends Annotation>, Optional<Annotation>> annotationCache;
 	private final MultiValueMap<Class<? extends Annotation>, P> propertyAnnotationCache;
 
@@ -114,12 +117,14 @@ public class BasicPersistentEntity<T, P extends PersistentProperty<P>>
 
 		this.information = information;
 		this.properties = new ArrayList<>();
+		this.transientProperties = new ArrayList<>(0);
 		this.persistentPropertiesCache = new ArrayList<>();
 		this.comparator = comparator;
 		this.creator = InstanceCreatorMetadataDiscoverer.discover(this);
 		this.associations = comparator == null ? new HashSet<>() : new TreeSet<>(new AssociationComparator<>(comparator));
 
 		this.propertyCache = new HashMap<>(16, 1.0f);
+		this.transientPropertyCache = new HashMap<>(0, 1f);
 		this.annotationCache = new ConcurrentHashMap<>(16);
 		this.propertyAnnotationCache = CollectionUtils.toMultiValueMap(new ConcurrentHashMap<>(16));
 		this.propertyAccessorFactory = BeanWrapperPropertyAccessorFactory.INSTANCE;
@@ -185,6 +190,18 @@ public class BasicPersistentEntity<T, P extends PersistentProperty<P>>
 	public void addPersistentProperty(P property) {
 
 		Assert.notNull(property, "Property must not be null");
+
+		if (property.isTransient()) {
+
+			if (transientProperties.contains(property)) {
+				return;
+			}
+
+			transientProperties.add(property);
+			transientPropertyCache.put(property.getName(), property);
+
+			return;
+		}
 
 		if (properties.contains(property)) {
 			return;
@@ -277,6 +294,19 @@ public class BasicPersistentEntity<T, P extends PersistentProperty<P>>
 	@Nullable
 	public P getPersistentProperty(String name) {
 		return propertyCache.get(name);
+	}
+
+	@Override
+	public @Nullable P getTransientProperty(String name) {
+		return transientPropertyCache.get(name);
+	}
+
+	@Override
+	public boolean isTransient(String property) {
+
+		P transientProperty = getTransientProperty(property);
+
+		return transientProperty != null && transientProperty.isTransient();
 	}
 
 	@Override

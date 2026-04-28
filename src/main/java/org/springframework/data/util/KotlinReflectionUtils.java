@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 the original author or authors.
+ * Copyright 2019-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,7 @@ public final class KotlinReflectionUtils {
 	 * Returns whether the given {@link KType} is a {@link KClass#isValue() value} class.
 	 *
 	 * @param type the kotlin type to inspect.
-	 * @return {@code true} the type is a value class.
+	 * @return {@literal true} the type is a value class.
 	 * @since 3.2
 	 */
 	public static boolean isValueClass(KType type) {
@@ -148,7 +148,7 @@ public final class KotlinReflectionUtils {
 	 * Returns whether the given class makes uses Kotlin {@link KClass#isValue() value} classes.
 	 *
 	 * @param type the kotlin type to inspect.
-	 * @return {@code true} when at least one property uses Kotlin value classes.
+	 * @return {@literal true} when at least one property uses Kotlin value classes.
 	 * @since 3.2
 	 */
 	public static boolean hasValueClassProperty(Class<?> type) {
@@ -169,7 +169,7 @@ public final class KotlinReflectionUtils {
 	}
 
 	/**
-	 * Returns {@literal} whether the given {@link MethodParameter} is nullable. Its declaring method can reference a
+	 * Returns whether the given {@link MethodParameter} is nullable. Its declaring method can reference a
 	 * Kotlin function, property or interface property.
 	 *
 	 * @return {@literal true} if {@link MethodParameter} is nullable.

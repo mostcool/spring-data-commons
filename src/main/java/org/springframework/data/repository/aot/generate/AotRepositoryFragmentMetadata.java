@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2025-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.springframework.core.ResolvableType;
 import org.springframework.data.javapoet.TypeNames;
 import org.springframework.data.repository.core.support.RepositoryFragment;
 import org.springframework.data.repository.query.QueryMethod;
-import org.springframework.javapoet.ParameterizedTypeName;
 import org.springframework.javapoet.TypeName;
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 the original author or authors.
+ * Copyright 2017-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public interface MethodLookup {
 
 	/**
 	 * Returns a composed {@link MethodLookup} that represents a concatenation of this predicate and another. When
-	 * evaluating the composed method lookup, if this lookup evaluates {@code true}, then the {@code other} method lookup
-	 * is not evaluated.
+	 * evaluating the composed method lookup, if this lookup evaluates {@literal true}, then the {@code other} method
+	 * lookup is not evaluated.
 	 *
 	 * @param other must not be {@literal null}.
 	 * @return the composed {@link MethodLookup}.

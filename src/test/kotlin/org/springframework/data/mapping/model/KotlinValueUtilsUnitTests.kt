@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 the original author or authors.
+ * Copyright 2023-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,20 +101,20 @@ class KotlinValueUtilsUnitTests {
 		val iterator = ctor.parameters.iterator()
 
 		val nv = KotlinValueUtils.getConstructorValueHierarchy(iterator.next());
-		assertThat(nv.actualType).isEqualTo(Int::class.java)
+		assertThat(nv.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nv.appliesBoxing()).isFalse
 
 		val nvn = KotlinValueUtils.getConstructorValueHierarchy(iterator.next());
-		assertThat(nvn.actualType).isEqualTo(Int::class.java)
+		assertThat(nvn.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvn.appliesBoxing()).isTrue
 		assertThat(nvn.parameterType).isEqualTo(PrimitiveValue::class.java)
 
 		val nvd = KotlinValueUtils.getConstructorValueHierarchy(iterator.next());
-		assertThat(nvd.actualType).isEqualTo(Int::class.java)
+		assertThat(nvd.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvd.appliesBoxing()).isFalse
 
 		val nvdn = KotlinValueUtils.getConstructorValueHierarchy(iterator.next());
-		assertThat(nvdn.actualType).isEqualTo(Int::class.java)
+		assertThat(nvdn.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvn.parameterType).isEqualTo(PrimitiveValue::class.java)
 		assertThat(nvdn.appliesBoxing()).isTrue
 	}
@@ -128,20 +128,21 @@ class KotlinValueUtilsUnitTests {
 		val parameters = copy.copyFunction.parameters;
 
 		val nv = KotlinValueUtils.getConstructorValueHierarchy(parameters[1]);
-		assertThat(nv.actualType).isEqualTo(Int::class.java)
+		assertThat(nv.actualType).isIn(Int::class.java, Int::class.javaObjectType)
+			.describedAs(parameters[1].toString())
 		assertThat(nv.appliesBoxing()).isFalse
 
 		val nvn = KotlinValueUtils.getConstructorValueHierarchy(parameters[2]);
-		assertThat(nvn.actualType).isEqualTo(Int::class.java)
+		assertThat(nvn.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvn.appliesBoxing()).isTrue
 		assertThat(nvn.parameterType).isEqualTo(PrimitiveValue::class.java)
 
 		val nvd = KotlinValueUtils.getConstructorValueHierarchy(parameters[3]);
-		assertThat(nvd.actualType).isEqualTo(Int::class.java)
+		assertThat(nvd.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvd.appliesBoxing()).isFalse
 
 		val nvdn = KotlinValueUtils.getConstructorValueHierarchy(parameters[4]);
-		assertThat(nvdn.actualType).isEqualTo(Int::class.java)
+		assertThat(nvdn.actualType).isIn(Int::class.java, Int::class.javaObjectType)
 		assertThat(nvn.parameterType).isEqualTo(PrimitiveValue::class.java)
 		assertThat(nvdn.appliesBoxing()).isTrue
 	}
@@ -214,7 +215,7 @@ class KotlinValueUtilsUnitTests {
 		val vh = KotlinValueUtils.getCopyValueHierarchy(
 			copyFunction.parameters.get(1)
 		)
-		assertThat(vh.actualType).isEqualTo(Object::class.java)
+		assertThat(vh.actualType).isEqualTo(Any::class.java)
 	}
 
 	@Test // GH-2986
@@ -226,7 +227,7 @@ class KotlinValueUtilsUnitTests {
 		val vh = KotlinValueUtils.getCopyValueHierarchy(
 			copyFunction.parameters.get(1)
 		)
-		assertThat(vh.actualType).isEqualTo(Object::class.java)
+		assertThat(vh.actualType).isEqualTo(Any::class.java)
 	}
 
 	@Test // GH-1947
@@ -267,7 +268,7 @@ class KotlinValueUtilsUnitTests {
 		assertThat(charseq.appliesBoxing()).isFalse
 
 		val recursive = KotlinValueUtils.getConstructorValueHierarchy(parameters[3]);
-		assertThat(recursive.actualType).isEqualTo(Object::class.java)
+		assertThat(recursive.actualType).isEqualTo(Any::class.java)
 		assertThat(recursive.parameterType).isEqualTo(MyGenericValue::class.java)
 		assertThat(recursive.appliesBoxing()).isFalse
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2025 the original author or authors.
+ * Copyright 2017-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.annotation.RepeatableContainers;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.NullHandling;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.web.SortDefault.SortDefaults;
 import org.springframework.util.Assert;
@@ -41,6 +42,7 @@ import org.springframework.util.StringUtils;
  * @author Mark Paluch
  * @author Vedran Pavic
  * @author Johannes Englmeier
+ * @author Petar Heyken
  * @see SortHandlerMethodArgumentResolver
  * @see ReactiveSortHandlerMethodArgumentResolver
  * @since 2.2
@@ -51,9 +53,6 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 	private static final String DEFAULT_PROPERTY_DELIMITER = ",";
 	private static final String DEFAULT_QUALIFIER_DELIMITER = "_";
 	private static final Sort DEFAULT_SORT = Sort.unsorted();
-
-	private static final String SORT_DEFAULTS_NAME = SortDefaults.class.getSimpleName();
-	private static final String SORT_DEFAULT_NAME = SortDefault.class.getSimpleName();
 
 	private Sort fallbackSort = DEFAULT_SORT;
 	private String sortParameter = DEFAULT_PARAMETER;
@@ -73,7 +72,7 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 
 	/**
 	 * Configures the delimiter used to separate property references and the direction to be sorted by. Defaults to
-	 * {@code}, which means sort values look like this: {@code firstname,lastname,asc}.
+	 * {@code ,} which means sort values look like this: {@code firstname,lastname,asc}.
 	 *
 	 * @param propertyDelimiter must not be {@literal null} or empty.
 	 */
@@ -163,10 +162,21 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 		}
 
 		List<Order> orders = new ArrayList<>(fields.length);
+		Direction direction = sortDefault.getEnum("direction", Direction.class);
+		NullHandling nullHandling = sortDefault.getEnum("nullHandling", NullHandling.class);
+		boolean caseSensitive = sortDefault.getBoolean("caseSensitive");
+
 		for (String field : fields) {
 
-			Order order = new Order(sortDefault.getEnum("direction", Sort.Direction.class), field);
-			orders.add(sortDefault.getBoolean("caseSensitive") ? order : order.ignoreCase());
+			Order order = new Order(direction, field);
+
+			order = switch (nullHandling) {
+				case NATIVE -> order.nullsNative();
+				case NULLS_FIRST -> order.nullsFirst();
+				case NULLS_LAST -> order.nullsLast();
+			};
+
+			orders.add(caseSensitive ? order : order.ignoreCase());
 		}
 
 		return sortOrNull.and(Sort.by(orders));
@@ -372,6 +382,7 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 
 		private SortOrderParser(String[] elements, int lastIndex, Optional<Direction> direction,
 				Optional<Boolean> ignoreCase) {
+
 			this.elements = elements;
 			this.lastIndex = Math.max(0, lastIndex);
 			this.direction = direction;
@@ -401,7 +412,9 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 		 */
 		public SortOrderParser parseIgnoreCase() {
 
-			Optional<Boolean> ignoreCase = lastIndex > 0 ? fromOptionalString(elements[lastIndex - 1]) : Optional.empty();
+			Optional<Boolean> ignoreCase = lastIndex > 0 ?
+					fromOptionalIgnoreCaseString(elements[lastIndex - 1]) :
+					Optional.empty();
 
 			return new SortOrderParser(elements, lastIndex - (ignoreCase.isPresent() ? 1 : 0), direction, ignoreCase);
 		}
@@ -431,7 +444,7 @@ public abstract class SortHandlerMethodArgumentResolverSupport {
 			}
 		}
 
-		private Optional<Boolean> fromOptionalString(String value) {
+		private Optional<Boolean> fromOptionalIgnoreCaseString(String value) {
 			return IGNORECASE.equalsIgnoreCase(value) ? Optional.of(true) : Optional.empty();
 		}
 

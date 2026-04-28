@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 the original author or authors.
+ * Copyright 2018-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ internal class KIterablePropertyPath<T, U>(
  * @author Tjeu Kayim
  * @author Mikhail Polivakha
  */
-internal fun asString(property: KProperty<*>): String {
+fun asString(property: KProperty<*>): String {
 	return when (property) {
 		is KPropertyPath<*, *> ->
 			"${asString(property.parent)}.${property.child.name}"
@@ -72,6 +72,7 @@ internal fun asString(property: KProperty<*>): String {
  * @since 2.5
  */
 @JvmName("div")
+@Deprecated("since 4.1, use the org.springframework.data.core extensions instead")
 operator fun <T, U> KProperty<T?>.div(other: KProperty1<T, U>): KProperty<U> =
 	KPropertyPath(this, other)
 
@@ -92,5 +93,6 @@ operator fun <T, U> KProperty<T?>.div(other: KProperty1<T, U>): KProperty<U> =
  * @since 3.5
  */
 @JvmName("divIterable")
+@Deprecated("since 4.1, use the org.springframework.data.core extensions instead")
 operator fun <T, U> KProperty<Collection<T?>?>.div(other: KProperty1<T, U>): KProperty<U> =
 	KIterablePropertyPath(this, other)

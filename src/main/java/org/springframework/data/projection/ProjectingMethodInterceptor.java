@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2025 the original author or authors.
+ * Copyright 2014-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,7 +143,7 @@ class ProjectingMethodInterceptor implements MethodInterceptor {
 	}
 
 	/**
-	 * Creates projections of the given {@link Map}'s values if necessary and returns an new {@link Map} with the handled
+	 * Creates projections of the given {@link Map}'s values if necessary and returns a new {@link Map} with the handled
 	 * values.
 	 *
 	 * @param sources must not be {@literal null}.
@@ -168,7 +168,7 @@ class ProjectingMethodInterceptor implements MethodInterceptor {
 	}
 
 	/**
-	 * Turns the given value into a {@link Collection}. Will turn an array into a collection an wrap all other values into
+	 * Turns the given value into a {@link Collection}. Will turn an array into a collection a wrap all other values into
 	 * a single-element collection.
 	 *
 	 * @param source must not be {@literal null}.

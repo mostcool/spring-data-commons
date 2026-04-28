@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ public abstract class AuditingHandlerSupport {
 	/**
 	 * Setter do determine if {@link Auditable#setCreatedDate(TemporalAccessor)}} and
 	 * {@link Auditable#setLastModifiedDate(TemporalAccessor)} shall be filled with the current Java time. Defaults to
-	 * {@code true}. One might set this to {@code false} to use database features to set entity time.
+	 * {@literal true}. One might set this to {@literal false} to use database features to set entity time.
 	 *
 	 * @param dateTimeForNow the dateTimeForNow to set
 	 */
@@ -71,7 +71,7 @@ public abstract class AuditingHandlerSupport {
 
 	/**
 	 * Set this to true if you want to treat entity creation as modification and thus setting the current date as
-	 * modification date during creation, too. Defaults to {@code true}.
+	 * modification date during creation, too. Defaults to {@literal true}.
 	 *
 	 * @param modifyOnCreation if modification information shall be set on creation, too
 	 */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2025 the original author or authors.
+ * Copyright 2018-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.core.Ordered;
 import org.springframework.data.repository.Repository;
@@ -45,10 +47,13 @@ class DeferredRepositoryInitializationListener implements ApplicationListener<Co
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 
+		ApplicationContext context = event.getApplicationContext();
+		if (context instanceof ConfigurableApplicationContext cac && !cac.getBeanFactory().equals(beanFactory)) {
+			return;
+		}
+
 		logger.info("Triggering deferred initialization of Spring Data repositories…");
-
 		beanFactory.getBeansOfType(Repository.class);
-
 		logger.info("Spring Data repositories initialized");
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 the original author or authors.
+ * Copyright 2022-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class PropertiesBasedNamedQueriesFactoryBean extends PropertiesLoaderSupp
 	 * Set whether a shared singleton {@code PropertiesBasedNamedQueries} instance should be created, or rather a new
 	 * {@code PropertiesBasedNamedQueries} instance on each request.
 	 * <p>
-	 * Default is {@code true} (a shared singleton).
+	 * Default is {@literal true} (a shared singleton).
 	 */
 	public void setSingleton(boolean singleton) {
 		this.singleton = singleton;

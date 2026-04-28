@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import java.lang.annotation.Target;
 
 /**
  * Marker annotation to declare a constructor or factory method annotation as factory/preferred constructor annotation.
+ * Properties used by the constructor (or factory method) must refer to persistent properties or be annotated with
+ * {@link org.springframework.beans.factory.annotation.Value @Value(…)} to obtain a value for object creation.
  *
  * @author Mark Paluch
  * @author Oliver Drotbohm

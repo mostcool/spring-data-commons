@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 the original author or authors.
+ * Copyright 2008-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ class AuditingHandlerUnitTests {
 	}
 
 	/**
-	 * Checks that the advice does not set modification information on creation if the falg is set to {@code false}.
+	 * Checks that the advice does not set modification information on creation if the falg is set to {@literal false}.
 	 */
 	@Test
 	void honoursModifiedOnCreationFlag() {

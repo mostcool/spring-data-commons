@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2025 the original author or authors.
+ * Copyright 2008-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.function.Function;
 
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Pageable;
@@ -55,8 +53,6 @@ public abstract class Parameters<S extends Parameters<S, T>, T extends Parameter
 	private static final String ALL_OR_NOTHING = String.format(
 			"Either use @%s on all parameters except %s and %s typed once, or none at all", Param.class.getSimpleName(),
 			Pageable.class.getSimpleName(), Sort.class.getSimpleName());
-
-	private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
 
 	private final int vectorIndex;
 	private final int scoreIndex;
@@ -101,8 +97,6 @@ public abstract class Parameters<S extends Parameters<S, T>, T extends Parameter
 
 			MethodParameter methodParameter = new MethodParameter(method, i)
 					.withContainingClass(parametersSource.getContainingClass());
-
-			methodParameter.initParameterNameDiscovery(PARAMETER_NAME_DISCOVERER);
 
 			T parameter = parameterFactory.apply(methodParameter);
 

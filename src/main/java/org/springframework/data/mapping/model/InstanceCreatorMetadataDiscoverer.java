@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 the original author or authors.
+ * Copyright 2021-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.KotlinDetector;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.core.TypeInformation;
@@ -50,8 +49,6 @@ import org.springframework.data.mapping.PersistentProperty;
  * @since 3.0
  */
 class InstanceCreatorMetadataDiscoverer {
-
-	private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
 
 	/**
 	 * Discover an entity creator
@@ -146,7 +143,7 @@ class InstanceCreatorMetadataDiscoverer {
 		Annotation[][] parameterAnnotations = method.getParameterAnnotations();
 		List<TypeInformation<?>> types = entity.getTypeInformation().getParameterTypes(method);
 
-		String[] parameterNames = PARAMETER_NAME_DISCOVERER.getParameterNames(method);
+		String[] parameterNames = DefaultParameterNameDiscoverer.getSharedInstance().getParameterNames(method);
 
 		for (int i = 0; i < parameters.length; i++) {
 

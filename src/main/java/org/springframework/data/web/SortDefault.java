@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2025 the original author or authors.
+ * Copyright 2013-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.lang.annotation.Target;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.data.domain.Sort.NullHandling;
 
 /**
  * Annotation to define the default {@link Sort} options to be used when injecting a {@link Sort} instance into a
@@ -33,6 +34,7 @@ import org.springframework.data.domain.Sort.Direction;
  * @since 1.6
  * @author Oliver Gierke
  * @author Mark Palich
+ * @author Petar Heyken
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
@@ -42,34 +44,33 @@ public @interface SortDefault {
 
 	/**
 	 * Alias for {@link #sort()} to make a declaration configuring fields only more concise.
-	 *
-	 * @return
 	 */
 	@AliasFor("sort")
 	String[] value() default {};
 
 	/**
-	 * The properties to sort by default. If unset, no sorting will be applied at all.
-	 *
-	 * @return
+	 * The properties to sort by default. If not set, no sorting will be applied at all.
 	 */
 	@AliasFor("value")
 	String[] sort() default {};
 
 	/**
 	 * The direction to sort by. Defaults to {@link Direction#ASC}.
-	 *
-	 * @return
 	 */
 	Direction direction() default Direction.ASC;
 
 	/**
 	 * Specifies whether to apply case-sensitive sorting. Defaults to {@literal true}.
-	 *
-	 * @return
 	 * @since 2.3
 	 */
 	boolean caseSensitive() default true;
+
+	/**
+	 * Specifies which null handling to apply. Defaults to {@link NullHandling#NATIVE}.
+	 *
+	 * @since 4.0.5
+	 */
+	NullHandling nullHandling() default NullHandling.NATIVE;
 
 	/**
 	 * Wrapper annotation to allow declaring multiple {@link SortDefault} annotations on a method parameter.
@@ -84,9 +85,9 @@ public @interface SortDefault {
 
 		/**
 		 * The individual {@link SortDefault} declarations to be sorted by.
-		 *
-		 * @return
 		 */
 		SortDefault[] value();
+
 	}
+
 }

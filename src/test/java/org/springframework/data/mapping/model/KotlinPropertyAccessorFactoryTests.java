@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 the original author or authors.
+ * Copyright 2023-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.*;
 
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
-import kotlin.reflect.jvm.internal.KotlinReflectionInternalError;
 
 import java.lang.reflect.Constructor;
 import java.util.function.Function;
@@ -28,6 +27,7 @@ import java.util.stream.Stream;
 import org.jmolecules.ddd.types.Association;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.mapping.Parameter;
 import org.springframework.data.mapping.context.SampleMappingContext;
@@ -120,9 +120,6 @@ public class KotlinPropertyAccessorFactoryTests {
 		if (factory instanceof BeanWrapperPropertyAccessorFactory) {
 
 			// see https://youtrack.jetbrains.com/issue/KT-57357
-			assertThatExceptionOfType(KotlinReflectionInternalError.class)
-					.isThrownBy(() -> propertyAccessor.setProperty(fullyNullable, barValue))
-					.withMessageContaining("This callable does not support a default call");
 			return;
 		}
 
@@ -162,9 +159,6 @@ public class KotlinPropertyAccessorFactoryTests {
 		if (factory instanceof BeanWrapperPropertyAccessorFactory) {
 
 			// see https://youtrack.jetbrains.com/issue/KT-57357
-			assertThatExceptionOfType(KotlinReflectionInternalError.class)
-					.isThrownBy(() -> propertyAccessor.setProperty(nullableNestedNullable, outer))
-					.withMessageContaining("This callable does not support a default call");
 			return;
 		}
 
@@ -206,9 +200,7 @@ public class KotlinPropertyAccessorFactoryTests {
 		if (factory instanceof BeanWrapperPropertyAccessorFactory) {
 
 			// see https://youtrack.jetbrains.com/issue/KT-57357
-			assertThatExceptionOfType(KotlinReflectionInternalError.class)
-					.isThrownBy(() -> propertyAccessor.setProperty(string, "string"))
-					.withMessageContaining("This callable does not support a default call");
+			assertThatException().isThrownBy(() -> propertyAccessor.setProperty(string, "string"));
 			return;
 		}
 

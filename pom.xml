@@ -33,7 +33,6 @@
 		<scala>2.11.7</scala>
 		<xmlbeam>1.4.26</xmlbeam>
 		<java-module-name>spring.data.commons</java-module-name>
-		<kotlin.api.target>1.8</kotlin.api.target>
 	</properties>
 
 	<dependencies>
@@ -117,7 +116,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!--  Project Reactor -->
+		<!-- Project Reactor -->
 
 		<dependency>
 			<groupId>io.projectreactor</groupId>
@@ -131,7 +130,7 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--  RxJava -->
+		<!-- RxJava -->
 
 		<dependency>
 			<groupId>io.reactivex.rxjava3</groupId>
@@ -236,6 +235,7 @@
 		</dependency>
 
 		<!-- Groovy -->
+
 		<dependency>
 			<groupId>org.codehaus.groovy</groupId>
 			<artifactId>groovy-all</artifactId>
@@ -244,6 +244,7 @@
 		</dependency>
 
 		<!-- Kotlin extension -->
+
 		<dependency>
 			<groupId>org.jetbrains.kotlin</groupId>
 			<artifactId>kotlin-stdlib</artifactId>
@@ -289,11 +290,21 @@
 		</dependency>
 
 		<!-- Scala -->
+
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-library</artifactId>
 			<version>${scala}</version>
 			<optional>true</optional>
+		</dependency>
+
+		<!-- Graal Native SDK -->
+
+		<dependency>
+			<groupId>org.graalvm.sdk</groupId>
+			<artifactId>graal-sdk</artifactId>
+			<version>25.0.2</version>
+			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
@@ -387,6 +398,69 @@
 					</resource>
 				</resources>
 			</build>
+		</profile>
+		<profile>
+			<id>distribute</id>
+			<build> <!-- Required for compilation of Javadoc generation -->
+				<plugins>
+					<plugin>
+						<groupId>org.jetbrains.kotlin</groupId>
+						<artifactId>kotlin-maven-plugin</artifactId>
+						<inherited>false</inherited>
+						<configuration>
+							<apiVersion>${kotlin.api.target}</apiVersion>
+							<languageVersion>${kotlin.api.target}</languageVersion>
+							<jvmTarget>${kotlin.jvm.target}</jvmTarget>
+							<javaParameters>true</javaParameters>
+							<args>
+								<arg>-Xjsr305=strict</arg>
+								<arg>-Xsuppress-version-warnings</arg>
+								<arg>-opt-in=kotlin.RequiresOptIn</arg>
+								<arg>-Xannotation-default-target=param-property</arg>
+							</args>
+						</configuration>
+						<executions>
+							<execution>
+								<id>compile</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>compile</goal>
+								</goals>
+								<configuration>
+									<sourceDirs>
+										<sourceDir>${project.basedir}/src/main/kotlin
+										</sourceDir>
+										<sourceDir>${project.basedir}/src/main/java
+										</sourceDir>
+									</sourceDirs>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>jmh</id>
+			<dependencies>
+				<dependency>
+					<groupId>org.openjdk.jmh</groupId>
+					<artifactId>jmh-core</artifactId>
+					<scope>test</scope>
+					<version>${jmh}</version>
+				</dependency>
+				<dependency>
+					<groupId>org.openjdk.jmh</groupId>
+					<artifactId>jmh-generator-annprocess</artifactId>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+			<repositories>
+				<repository>
+					<id>jitpack.io</id>
+					<url>https://jitpack.io</url>
+				</repository>
+			</repositories>
 		</profile>
 	</profiles>
 

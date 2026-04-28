@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import org.springframework.util.StringUtils;
  * @author Christoph Strobl
  * @author John Blum
  */
-public class PropertyReferenceException extends RuntimeException {
+public class PropertyReferenceException extends PropertyResolutionException {
 
 	private static final @Serial long serialVersionUID = -5254424051438976570L;
 
@@ -53,18 +53,20 @@ public class PropertyReferenceException extends RuntimeException {
 	 *
 	 * @param propertyName the name of the property not found on the given type, must not be {@literal null} or empty.
 	 * @param type the type the property could not be found on, must not be {@literal null}.
-	 * @param alreadyResolvedPah the previously calculated {@link PropertyPath}s, must not be {@literal null}.
+	 * @param alreadyResolvedPath the previously calculated {@link PropertyPath}s, must not be {@literal null}.
 	 */
 	public PropertyReferenceException(String propertyName, TypeInformation<?> type,
-			List<? extends PropertyPath> alreadyResolvedPah) {
+			List<? extends PropertyPath> alreadyResolvedPath) {
+
+		super(null);
 
 		Assert.hasText(propertyName, "Property name must not be null");
 		Assert.notNull(type, "Type must not be null");
-		Assert.notNull(alreadyResolvedPah, "Already resolved paths must not be null");
+		Assert.notNull(alreadyResolvedPath, "Already resolved paths must not be null");
 
 		this.propertyName = propertyName;
 		this.type = type;
-		this.alreadyResolvedPath = alreadyResolvedPah;
+		this.alreadyResolvedPath = alreadyResolvedPath;
 		this.propertyMatches = Lazy.of(() -> detectPotentialMatches(propertyName, type.getType()));
 	}
 

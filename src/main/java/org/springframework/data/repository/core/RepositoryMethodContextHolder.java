@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 the original author or authors.
+ * Copyright 2024-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class RepositoryMethodContextHolder {
 
 	/**
 	 * ThreadLocal holder for repository method associated with this thread. Will contain {@code null} unless the
-	 * "exposeMetadata" property on the controlling repository factory configuration has been set to {@code true}.
+	 * "exposeMetadata" property on the controlling repository factory configuration has been set to {@literal true}.
 	 */
 	private static final ThreadLocal<RepositoryMethodContext> currentMethod = new NamedThreadLocal<>(
 			"Current Repository Method");

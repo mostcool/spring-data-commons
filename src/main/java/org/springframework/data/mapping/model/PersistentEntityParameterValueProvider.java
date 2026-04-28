@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.data.mapping.PersistentProperty;
  *
  * @author Oliver Gierke
  * @author Johannes Englmeier
+ * @author Mark Paluch
  */
 public class PersistentEntityParameterValueProvider<P extends PersistentProperty<P>>
 		implements ParameterValueProvider<P> {
@@ -50,12 +51,15 @@ public class PersistentEntityParameterValueProvider<P extends PersistentProperty
 	public <T> T getParameterValue(Parameter<T, P> parameter) {
 
 		InstanceCreatorMetadata<P> creator = entity.getInstanceCreatorMetadata();
+		String name = parameter.getName();
 
 		if (creator != null && creator.isParentParameter(parameter)) {
 			return (T) parent;
 		}
 
-		String name = parameter.getName();
+		if (parameter.isTransient()) {
+			return (T) ParameterValueProvider.getDefaultValue(parameter.getRawType());
+		}
 
 		if (name == null) {
 			throw new MappingException(String.format("Parameter %s does not have a name", parameter));

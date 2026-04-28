@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2025 the original author or authors.
+ * Copyright 2012-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ public final class ReflectionUtils {
 		 * Returns the description of the field filter. Used in exceptions being thrown in case uniqueness shall be enforced
 		 * on the field filter.
 		 *
-		 * @return
+		 * @return the description of the field filter
 		 */
 		String getDescription();
 
@@ -267,7 +267,7 @@ public final class ReflectionUtils {
 	 *
 	 * @param field must not be {@literal null}.
 	 * @param target must not be {@literal null}.
-	 * @param value
+	 * @param value can be {@literal null}.
 	 */
 	public static void setField(Field field, Object target, @Nullable Object value) {
 
@@ -479,7 +479,7 @@ public final class ReflectionUtils {
 	}
 
 	/**
-	 * Returns {@literal} whether the given {@link MethodParameter} is nullable. Nullable parameters are reference types
+	 * Returns whether the given {@link MethodParameter} is nullable. Nullable parameters are reference types
 	 * and ones that are defined in Kotlin as such.
 	 *
 	 * @return {@literal true} if {@link MethodParameter} is nullable.

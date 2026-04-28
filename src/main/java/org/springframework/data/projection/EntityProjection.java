@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 the original author or authors.
+ * Copyright 2021-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,14 +159,14 @@ public class EntityProjection<M, D> implements Streamable<EntityProjection.Prope
 	}
 
 	/**
-	 * @return {@code true} if the {@link #getMappedType()} is a projection.
+	 * @return {@literal true} if the {@link #getMappedType()} is a projection.
 	 */
 	public boolean isProjection() {
 		return projection;
 	}
 
 	/**
-	 * @return {@code true} if the {@link #getMappedType()} is a closed projection.
+	 * @return {@literal true} if the {@link #getMappedType()} is a closed projection.
 	 */
 	public boolean isClosedProjection() {
 		return isProjection()

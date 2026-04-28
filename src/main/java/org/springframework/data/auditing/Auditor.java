@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 the original author or authors.
+ * Copyright 2020-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ class Auditor<T> {
 	 *
 	 * @param source can be {@literal null}.
 	 * @param <T>
-	 * @return {@link Auditor#none()} if the given {@literal source} is {@literal null}. }
+	 * @return {@link Auditor#none()} if the given {@literal source} is {@literal null}.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static <T> Auditor<T> of(@Nullable T source) {
@@ -77,7 +77,7 @@ class Auditor<T> {
 	 *
 	 * @param source must not be {@literal null}.
 	 * @param <T>
-	 * @return {@link Auditor#none()} if the given {@literal source} is {@literal null}. }
+	 * @return {@link Auditor#none()} if the given {@literal source} is {@literal null}.
 	 */
 	public static <T> Auditor<T> ofOptional(Optional<T> source) {
 		return Auditor.of(source.orElse(null));

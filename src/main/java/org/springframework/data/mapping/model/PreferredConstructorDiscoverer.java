@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import org.jspecify.annotations.Nullable;
 
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.KotlinDetector;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.annotation.PersistenceCreator;
 import org.springframework.data.core.TypeInformation;
@@ -213,8 +212,6 @@ public interface PreferredConstructorDiscoverer {
 			}
 		};
 
-		private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
-
 		/**
 		 * Find the appropriate discoverer for {@code type}.
 		 *
@@ -249,7 +246,7 @@ public interface PreferredConstructorDiscoverer {
 			}
 
 			List<TypeInformation<?>> parameterTypes = typeInformation.getParameterTypes(constructor);
-			String[] parameterNames = PARAMETER_NAME_DISCOVERER.getParameterNames(constructor);
+			String[] parameterNames = DefaultParameterNameDiscoverer.getSharedInstance().getParameterNames(constructor);
 
 			Parameter<Object, P>[] parameters = new Parameter[parameterTypes.size()];
 			Annotation[][] parameterAnnotations = constructor.getParameterAnnotations();

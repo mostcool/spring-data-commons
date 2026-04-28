@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 the original author or authors.
+ * Copyright 2015-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public final class Range<T> {
 	/**
 	 * Creates a new Range with the given value as sole member.
 	 *
-	 * @param <T> the type of the range.>
+	 * @param <T> the type of the range.
 	 * @param value must not be {@literal null}.
 	 * @return a range containing the given value.
 	 * @see Range#closed(Object, Object)

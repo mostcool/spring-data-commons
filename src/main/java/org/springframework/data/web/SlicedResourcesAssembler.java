@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 the original author or authors.
+ * Copyright 2022-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.springframework.hateoas.UriTemplate;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.hateoas.server.core.EmbeddedWrapper;
 import org.springframework.hateoas.server.core.EmbeddedWrappers;
+import org.springframework.lang.CheckReturnValue;
 import org.springframework.util.Assert;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.util.UriComponents;
@@ -100,6 +101,7 @@ public class SlicedResourcesAssembler<T>
 	 * @return will never be {@literal null}.
 	 * @since 3.1
 	 */
+	@CheckReturnValue
 	public SlicedResourcesAssembler<T> withParameter(@Nullable MethodParameter parameter) {
 		return new SlicedResourcesAssembler<>(pageableResolver, baseUri, parameter);
 	}
@@ -116,7 +118,7 @@ public class SlicedResourcesAssembler<T>
 	 *
 	 * @param slice must not be {@literal null}.
 	 * @param selfLink must not be {@literal null}.
-	 * @return
+	 * @return a {@link SlicedModel}.
 	 */
 	public SlicedModel<EntityModel<T>> toModel(Slice<T> slice, Link selfLink) {
 		return toModel(slice, EntityModel::of, selfLink);
@@ -128,7 +130,7 @@ public class SlicedResourcesAssembler<T>
 	 *
 	 * @param slice must not be {@literal null}.
 	 * @param assembler must not be {@literal null}.
-	 * @return
+	 * @return a {@link SlicedModel}.
 	 */
 	public <R extends RepresentationModel<?>> SlicedModel<R> toModel(Slice<T> slice,
 			RepresentationModelAssembler<T, R> assembler) {
@@ -143,10 +145,13 @@ public class SlicedResourcesAssembler<T>
 	 * @param slice must not be {@literal null}.
 	 * @param assembler must not be {@literal null}.
 	 * @param link must not be {@literal null}.
-	 * @return
+	 * @return a {@link SlicedModel}.
 	 */
 	public <R extends RepresentationModel<?>> SlicedModel<R> toModel(Slice<T> slice,
 			RepresentationModelAssembler<T, R> assembler, Link link) {
+
+		Assert.notNull(link, "Link must not be null");
+
 		return createModel(slice, assembler, link);
 	}
 
@@ -155,7 +160,7 @@ public class SlicedResourcesAssembler<T>
 	 *
 	 * @param slice must not be {@literal null}, content must be empty.
 	 * @param type must not be {@literal null}.
-	 * @return
+	 * @return an empty {@link SlicedModel}.
 	 */
 	public SlicedModel<?> toEmptyModel(Slice<?> slice, Class<?> type) {
 		return toEmptyModel(slice, type, (Link) null);
@@ -166,15 +171,14 @@ public class SlicedResourcesAssembler<T>
 	 *
 	 * @param slice must not be {@literal null}, content must be empty.
 	 * @param type must not be {@literal null}.
-	 * @param link must not be {@literal null}.
-	 * @return
+	 * @param link can be {@literal null}.
+	 * @return an empty {@link SlicedModel}.
 	 */
 	public SlicedModel<?> toEmptyModel(Slice<?> slice, Class<?> type, @Nullable Link link) {
 
 		Assert.notNull(slice, "Slice must not be null");
 		Assert.isTrue(!slice.hasContent(), "Slice must not have any content");
 		Assert.notNull(type, "Type must not be null");
-		Assert.notNull(link, "Link must not be null");
 
 		SliceMetadata metadata = asSliceMetadata(slice);
 
@@ -200,6 +204,7 @@ public class SlicedResourcesAssembler<T>
 	 */
 	protected <R extends RepresentationModel<?>, S> SlicedModel<R> createSlicedModel(List<R> resources,
 			SliceMetadata metadata, Slice<S> slice) {
+
 		Assert.notNull(resources, "Content resources must not be null");
 		Assert.notNull(metadata, "SliceMetadata must not be null");
 		Assert.notNull(slice, "Slice must not be null");
@@ -209,6 +214,7 @@ public class SlicedResourcesAssembler<T>
 
 	private <S, R extends RepresentationModel<?>> SlicedModel<R> createModel(Slice<S> slice,
 			RepresentationModelAssembler<S, R> assembler, @Nullable Link link) {
+
 		Assert.notNull(slice, "Slice must not be null");
 		Assert.notNull(assembler, "ResourceAssembler must not be null");
 
@@ -226,7 +232,6 @@ public class SlicedResourcesAssembler<T>
 	private <R> SlicedModel<R> addPaginationLinks(SlicedModel<R> resources, Slice<?> slice, @Nullable Link link) {
 
 		UriTemplate base = getUriTemplate(link);
-
 		boolean isNavigable = slice.hasPrevious() || slice.hasNext();
 
 		if (isNavigable || forceFirstRel) {

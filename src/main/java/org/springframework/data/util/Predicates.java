@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 the original author or authors.
+ * Copyright 2021-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,18 +60,18 @@ public interface Predicates {
 	}
 
 	/**
-	 * A {@link Predicate} that yields always {@code true}.
+	 * A {@link Predicate} that yields always {@literal true}.
 	 *
-	 * @return a {@link Predicate} that yields always {@code true}.
+	 * @return a {@link Predicate} that yields always {@literal true}.
 	 */
 	static <T> Predicate<T> isTrue() {
 		return t -> true;
 	}
 
 	/**
-	 * A {@link Predicate} that yields always {@code false}.
+	 * A {@link Predicate} that yields always {@literal false}.
 	 *
-	 * @return a {@link Predicate} that yields always {@code false}.
+	 * @return a {@link Predicate} that yields always {@literal false}.
 	 */
 	static <T> Predicate<T> isFalse() {
 		return t -> false;

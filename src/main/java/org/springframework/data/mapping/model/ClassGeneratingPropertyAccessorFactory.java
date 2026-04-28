@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 the original author or authors.
+ * Copyright 2016-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
 
@@ -57,7 +56,6 @@ import org.springframework.data.mapping.SimpleAssociationHandler;
 import org.springframework.data.mapping.SimplePropertyHandler;
 import org.springframework.data.mapping.model.KotlinCopyMethod.KotlinCopyByProperty;
 import org.springframework.data.mapping.model.KotlinValueUtils.ValueBoxing;
-import org.springframework.data.util.Optionals;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ConcurrentLruCache;
@@ -76,8 +74,7 @@ import org.springframework.util.StringUtils;
  * @author Johannes Englmeier
  * @since 1.13
  */
-public class ClassGeneratingPropertyAccessorFactory
-		implements PersistentPropertyAccessorFactory {
+public class ClassGeneratingPropertyAccessorFactory implements PersistentPropertyAccessorFactory {
 
 	// Pooling of parameter arrays to prevent excessive object allocation.
 	private final ThreadLocal<Object[]> argumentCache = ThreadLocal.withInitial(() -> new Object[1]);
@@ -612,27 +609,6 @@ public class ClassGeneratingPropertyAccessorFactory
 		}
 
 		/**
-		 * Retrieve all classes which are involved in property/getter/setter declarations as these elements may be
-		 * distributed across the type hierarchy.
-		 */
-		@SuppressWarnings("null")
-		private static List<Class<?>> getPropertyDeclaratingClasses(List<PersistentProperty<?>> persistentProperties) {
-
-			return persistentProperties.stream().flatMap(property -> {
-				return Optionals
-						.toStream(Optional.ofNullable(property.getField()), Optional.ofNullable(property.getGetter()),
-								Optional.ofNullable(property.getSetter()))
-
-						// keep it a lambda to infer the correct types, preventing
-						// LambdaConversionException: Invalid receiver type class java.lang.reflect.AccessibleObject; not a subtype
-						// of implementation type interface java.lang.reflect.Member
-						.map(Member::getDeclaringClass);
-
-			}).collect(Collectors.collectingAndThen(Collectors.toSet(), ArrayList::new));
-
-		}
-
-		/**
 		 * Generate property getter initializer.
 		 */
 		private static void visitPropertyGetterInitializer(PersistentProperty<?> property, MethodVisitor mv,
@@ -676,8 +652,8 @@ public class ClassGeneratingPropertyAccessorFactory
 		 * Generate property setter/wither initializer.
 		 */
 		private static void visitPropertySetterInitializer(@Nullable Method method, PersistentProperty<?> property,
-				MethodVisitor mv, String internalClassName,
-				Function<PersistentProperty<?>, String> setterNameFunction, int localVariableIndex) {
+				MethodVisitor mv, String internalClassName, Function<PersistentProperty<?>, String> setterNameFunction,
+				int localVariableIndex) {
 
 			// method = <entity>.class.getDeclaredMethod()
 
@@ -1043,11 +1019,7 @@ public class ClassGeneratingPropertyAccessorFactory
 				mv.visitLabel(propertyStackAddress.label);
 				mv.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
 
-				if (supportsMutation(property)) {
-					visitSetProperty0(entity, property, mv, internalClassName);
-				} else {
-					mv.visitJumpInsn(GOTO, dfltLabel);
-				}
+				visitSetProperty0(entity, property, mv, internalClassName, () -> mv.visitJumpInsn(GOTO, dfltLabel));
 			}
 
 			mv.visitLabel(dfltLabel);
@@ -1060,7 +1032,7 @@ public class ClassGeneratingPropertyAccessorFactory
 		 * called as if the method had the expected signature and not array/varargs.
 		 */
 		private static void visitSetProperty0(PersistentEntity<?, ?> entity, PersistentProperty<?> property,
-				MethodVisitor mv, String internalClassName) {
+				MethodVisitor mv, String internalClassName, Runnable onImmutable) {
 
 			Method setter = property.getSetter();
 			Method wither = property.getWither();
@@ -1069,12 +1041,12 @@ public class ClassGeneratingPropertyAccessorFactory
 
 				if (wither != null) {
 					visitWithProperty(entity, property, mv, internalClassName, wither);
-				}
-
-				if (KotlinDetector.isKotlinType(entity.getType()) && KotlinCopyMethod.hasKotlinCopyMethodFor(property)) {
+				} else if (KotlinDetector.isKotlinType(entity.getType()) && KotlinCopyMethod.hasKotlinCopyMethodFor(property)) {
 					visitKotlinCopy(entity, property, mv, internalClassName);
+				} else {
+					onImmutable.run();
+					return;
 				}
-
 			} else if (property.usePropertyAccess() && setter != null) {
 				visitSetProperty(entity, property, mv, internalClassName, setter);
 			} else {
@@ -1250,30 +1222,29 @@ public class ClassGeneratingPropertyAccessorFactory
 		private static void visitSetField(PersistentEntity<?, ?> entity, PersistentProperty<?> property, MethodVisitor mv,
 				String internalClassName) {
 
-			Field field = property.getField();
-			if (field != null) {
-				if (generateSetterMethodHandle(entity, field)) {
-					// $fieldSetter.invoke(this.bean, object)
-					mv.visitFieldInsn(GETSTATIC, internalClassName, fieldSetterName(property),
-							referenceName(JAVA_LANG_INVOKE_METHOD_HANDLE));
-					mv.visitVarInsn(ALOAD, 0);
-					mv.visitFieldInsn(GETFIELD, internalClassName, BEAN_FIELD, getAccessibleTypeReferenceName(entity));
-					mv.visitVarInsn(ALOAD, 2);
-					mv.visitMethodInsn(INVOKEVIRTUAL, JAVA_LANG_INVOKE_METHOD_HANDLE, "invoke",
-							String.format("(%s%s)V", referenceName(JAVA_LANG_OBJECT), referenceName(JAVA_LANG_OBJECT)), false);
-				} else {
-					// this.bean.field
-					mv.visitVarInsn(ALOAD, 0);
-					mv.visitFieldInsn(GETFIELD, internalClassName, BEAN_FIELD, getAccessibleTypeReferenceName(entity));
-					mv.visitVarInsn(ALOAD, 2);
+			Field field = property.getRequiredField();
 
-					Class<?> fieldType = field.getType();
+			if (generateSetterMethodHandle(entity, field)) {
+				// $fieldSetter.invoke(this.bean, object)
+				mv.visitFieldInsn(GETSTATIC, internalClassName, fieldSetterName(property),
+						referenceName(JAVA_LANG_INVOKE_METHOD_HANDLE));
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitFieldInsn(GETFIELD, internalClassName, BEAN_FIELD, getAccessibleTypeReferenceName(entity));
+				mv.visitVarInsn(ALOAD, 2);
+				mv.visitMethodInsn(INVOKEVIRTUAL, JAVA_LANG_INVOKE_METHOD_HANDLE, "invoke",
+						String.format("(%s%s)V", referenceName(JAVA_LANG_OBJECT), referenceName(JAVA_LANG_OBJECT)), false);
+			} else {
+				// this.bean.field
+				mv.visitVarInsn(ALOAD, 0);
+				mv.visitFieldInsn(GETFIELD, internalClassName, BEAN_FIELD, getAccessibleTypeReferenceName(entity));
+				mv.visitVarInsn(ALOAD, 2);
 
-					mv.visitTypeInsn(CHECKCAST, Type.getInternalName(autoboxType(fieldType)));
-					autoboxIfNeeded(autoboxType(fieldType), fieldType, mv);
-					mv.visitFieldInsn(PUTFIELD, Type.getInternalName(field.getDeclaringClass()), field.getName(),
-							signatureTypeName(fieldType));
-				}
+				Class<?> fieldType = field.getType();
+
+				mv.visitTypeInsn(CHECKCAST, Type.getInternalName(autoboxType(fieldType)));
+				autoboxIfNeeded(autoboxType(fieldType), fieldType, mv);
+				mv.visitFieldInsn(PUTFIELD, Type.getInternalName(field.getDeclaringClass()), field.getName(),
+						signatureTypeName(fieldType));
 			}
 		}
 
@@ -1281,8 +1252,8 @@ public class ClassGeneratingPropertyAccessorFactory
 		 * Creates the method signature containing parameter types (e.g. (Ljava/lang/Object)I for a method accepting
 		 * {@link Object} and returning a primitive {@code int}).
 		 *
-		 * @param method
-		 * @return
+		 * @param method must not be {@literal null}.
+		 * @return a string representation of the given method.
 		 * @since 2.1
 		 */
 		private static String getArgumentSignature(Method method) {
@@ -1401,13 +1372,6 @@ public class ClassGeneratingPropertyAccessorFactory
 			return true;
 		}
 
-		/**
-		 * Retrieves the class variable index with an offset of {@code 4}.
-		 */
-		private static int classVariableIndex5(List<Class<?>> list, Class<?> item) {
-			return 5 + list.indexOf(item);
-		}
-
 		static String generateClassName(PersistentEntity<?, ?> entity) {
 			return entity.getType().getName() + TAG + Integer.toString(Math.abs(entity.getType().getName().hashCode()), 36);
 		}
@@ -1473,7 +1437,7 @@ public class ClassGeneratingPropertyAccessorFactory
 	}
 
 	/**
-	 * @param property
+	 * @param property the persistent property to inspect.
 	 * @return {@literal true} if object mutation is supported.
 	 */
 	static boolean supportsMutation(PersistentProperty<?> property) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 the original author or authors.
+ * Copyright 2011-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -645,10 +645,6 @@ public abstract class AbstractMappingContext<E extends MutablePersistentEntity<?
 		private void createAndRegisterProperty(Property input) {
 
 			P property = createPersistentProperty(input, entity, simpleTypeHolder);
-
-			if (property.isTransient()) {
-				return;
-			}
 
 			if (!input.isFieldBacked() && !property.usePropertyAccess()) {
 				return;

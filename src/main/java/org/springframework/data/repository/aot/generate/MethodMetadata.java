@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 the original author or authors.
+ * Copyright 2025-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.springframework.data.repository.aot.generate;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
@@ -27,13 +28,14 @@ import java.util.function.Function;
 
 import org.jspecify.annotations.Nullable;
 
-import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
-import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.annotation.MergedAnnotation;
+import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.data.core.TypeInformation;
 import org.springframework.data.javapoet.TypeNames;
 import org.springframework.data.repository.core.RepositoryInformation;
+import org.springframework.javapoet.AnnotationSpec;
 import org.springframework.javapoet.ParameterSpec;
 import org.springframework.javapoet.TypeName;
 import org.springframework.util.Assert;
@@ -63,9 +65,8 @@ class MethodMetadata {
 		Map<String, MethodParameter> methodParameters = new LinkedHashMap<>();
 
 		ResolvableType repositoryInterface = ResolvableType.forClass(repositoryInformation.getRepositoryInterface());
-		ParameterNameDiscoverer nameDiscoverer = new DefaultParameterNameDiscoverer();
 
-		initializeMethodArguments(method, nameDiscoverer, repositoryInterface, methodArguments, methodParameters);
+		initializeMethodArguments(method, repositoryInterface, methodArguments, methodParameters);
 
 		this.methodArguments = Collections.unmodifiableMap(methodArguments);
 		this.methodParameters = Collections.unmodifiableMap(methodParameters);
@@ -76,7 +77,7 @@ class MethodMetadata {
 				: type.toResolvableType();
 	}
 
-	private static void initializeMethodArguments(Method method, ParameterNameDiscoverer nameDiscoverer,
+	private static void initializeMethodArguments(Method method,
 			ResolvableType repositoryInterface, Map<String, ParameterSpec> methodArguments,
 			Map<String, MethodParameter> methodParameters) {
 
@@ -86,12 +87,11 @@ class MethodMetadata {
 
 			MethodParameter methodParameter = MethodParameter.forParameter(parameter)
 					.withContainingClass(repositoryInterfaceType);
-			methodParameter.initParameterNameDiscovery(nameDiscoverer);
 
 			TypeName parameterType = parameterTypeName(methodParameter, repositoryInterfaceType);
 
 			Assert.notNull(methodParameter.getParameterName(), "MethodParameter.getParameterName() must not be null");
-			ParameterSpec parameterSpec = ParameterSpec.builder(parameterType, methodParameter.getParameterName()).build();
+			ParameterSpec parameterSpec = buildParameter(parameterType, methodParameter);
 
 			if (methodArguments.containsKey(parameterSpec.name())) {
 				throw new IllegalStateException("Parameter with name '" + parameterSpec.name() + "' already exists.");
@@ -102,7 +102,19 @@ class MethodMetadata {
 		}
 	}
 
-    @SuppressWarnings("NullAway")
+	private static ParameterSpec buildParameter(TypeName parameterType, MethodParameter methodParameter) {
+
+		ParameterSpec.Builder builder = ParameterSpec.builder(parameterType, methodParameter.getParameterName());
+		MergedAnnotations annotations = MergedAnnotations.from(methodParameter.getParameterAnnotations());
+
+		for (MergedAnnotation<Annotation> annotation : annotations) {
+			builder.addAnnotation(AnnotationSpec.get(annotation.synthesize()));
+		}
+
+		return builder.build();
+	}
+
+	@SuppressWarnings("NullAway")
 	static TypeName parameterTypeName(MethodParameter methodParameter, Class<?> repositoryInterface) {
 
 		ResolvableType resolvableParameterType = ResolvableType.forMethodParameter(methodParameter);

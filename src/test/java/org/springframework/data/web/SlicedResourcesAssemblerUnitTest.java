@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 the original author or authors.
+ * Copyright 2022-present the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import org.springframework.data.domain.AbstractPageRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +47,6 @@ import org.springframework.web.util.UriComponentsBuilder;
  *
  * @author Michael Schout
  * @author Oliver Drotbohm
- * @since 3.1
  */
 class SlicedResourcesAssemblerUnitTest {
 
@@ -257,6 +258,32 @@ class SlicedResourcesAssemblerUnitTest {
 
 		assertThat(model.getRequiredLink(IanaLinkRelations.FIRST).getHref())
 				.isEqualTo("http://localhost/sample?foo=bar&page=0&size=1");
+	}
+
+	@Test // GH-3452
+	void emptySliceCreatorNullLink() {
+
+		var result = assembler.toEmptyModel(EMPTY_SLICE, Person.class, (Link) null);
+
+		var content = result.getContent();
+		assertThat(content).hasSize(1);
+
+		var element = content.iterator().next();
+		assertThat(element).isInstanceOf(EmbeddedWrapper.class);
+		assertThat(((EmbeddedWrapper) element).getRelTargetType()).isEqualTo(Person.class);
+	}
+
+	@Test // GH-3452
+	@SuppressWarnings("deprecation")
+	void emptySliceCreatorRejectsNullOptionalLink() {
+
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> assembler.toEmptyModel(EMPTY_SLICE, Person.class, (Optional<Link>) null));
+	}
+
+	@Test // GH-3452
+	void createsSliceRejectsNullLink() {
+		assertThatIllegalArgumentException().isThrownBy(() -> assembler.toModel(createSlice(1), (Link) null));
 	}
 
 	private static Slice<Person> createSlice(int index) {
