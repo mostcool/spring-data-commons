@@ -5,14 +5,13 @@
 
 	<groupId>org.springframework.data</groupId>
 	<artifactId>spring-data-commons</artifactId>
-	<version>4.1.0-SNAPSHOT</version>
+	<version>4.2.0-SNAPSHOT</version>
 
 	<name>Spring Data Core</name>
 	<description>Core Spring concepts underpinning every Spring Data module.</description>
 	<url>https://spring.io/projects/spring-data</url>
 	<scm>
-		<connection>scm:git:https://github.com/spring-projects/spring-data-commons.git
-		</connection>
+		<connection>scm:git:https://github.com/spring-projects/spring-data-commons.git</connection>
 		<developerConnection>
 			scm:git:git@github.com:spring-projects/spring-data-commons.git
 		</developerConnection>
@@ -25,12 +24,12 @@
 	<parent>
 		<groupId>org.springframework.data.build</groupId>
 		<artifactId>spring-data-parent</artifactId>
-		<version>4.1.0-SNAPSHOT</version>
+		<version>4.2.0-SNAPSHOT</version>
 	</parent>
 
 	<properties>
 
-		<scala>2.11.7</scala>
+		<scala>3.8.4</scala>
 		<xmlbeam>1.4.26</xmlbeam>
 		<java-module-name>spring.data.commons</java-module-name>
 	</properties>
@@ -223,7 +222,7 @@
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
 			<artifactId>jaxb-impl</artifactId>
-			<version>3.0.2</version>
+			<version>4.0.9</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -237,9 +236,9 @@
 		<!-- Groovy -->
 
 		<dependency>
-			<groupId>org.codehaus.groovy</groupId>
-			<artifactId>groovy-all</artifactId>
-			<version>2.4.21</version>
+			<groupId>org.apache.groovy</groupId>
+			<artifactId>groovy</artifactId>
+			<version>5.0.6</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -303,14 +302,14 @@
 		<dependency>
 			<groupId>org.graalvm.sdk</groupId>
 			<artifactId>graal-sdk</artifactId>
-			<version>25.0.2</version>
+			<version>25.0.3</version>
 			<scope>provided</scope>
 		</dependency>
 
 		<dependency>
 			<groupId>jakarta.transaction</groupId>
 			<artifactId>jakarta.transaction-api</artifactId>
-			<version>2.0.0</version>
+			<version>2.0.1</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -428,10 +427,8 @@
 								</goals>
 								<configuration>
 									<sourceDirs>
-										<sourceDir>${project.basedir}/src/main/kotlin
-										</sourceDir>
-										<sourceDir>${project.basedir}/src/main/java
-										</sourceDir>
+										<sourceDir>${project.basedir}/src/main/kotlin</sourceDir>
+										<sourceDir>${project.basedir}/src/main/java</sourceDir>
 									</sourceDirs>
 								</configuration>
 							</execution>
